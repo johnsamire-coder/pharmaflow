@@ -1,0 +1,99 @@
+{% extends 'core/base.html' %}
+{% block title %}تسجيل مرتجع - {{ consignment.consignment_number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-undo me-2 text-warning"></i>
+        تسجيل مرتجع: {{ consignment.consignment_number }}
+    </h2>
+    <a href="{% url 'consignments:detail' consignment.pk %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>رجوع
+    </a>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-user me-2"></i>العميل: <strong>{{ consignment.customer.customer_name }}</strong>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-warning text-dark fw-bold">
+            <i class="fas fa-calendar me-2"></i>بيانات المرتجع
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">تاريخ الاسترداد <span class="text-danger">*</span></label>
+                    {{ form.return_date }}
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">ملاحظات</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="fas fa-list me-2"></i>الكميات المرتجعة
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th class="text-center">المرسل</th>
+                            <th class="text-center">المرتجع سابقاً</th>
+                            <th class="text-center">المباع</th>
+                            <th class="text-center text-success fw-bold">المتبقي</th>
+                            <th class="text-center">الكمية المرتجعة الآن</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="fw-bold">{{ item.product.product_name }}</td>
+                            <td class="text-center">{{ item.quantity_sent }}</td>
+                            <td class="text-center text-warning">{{ item.quantity_returned }}</td>
+                            <td class="text-center text-success">{{ item.quantity_sold }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary fs-6">{{ item.quantity_remaining }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if item.quantity_remaining > 0 %}
+                                <input type="number"
+                                       name="return_qty_{{ item.id }}"
+                                       min="0"
+                                       max="{{ item.quantity_remaining }}"
+                                       value="0"
+                                       class="form-control form-control-sm text-center"
+                                       style="width: 100px; margin: 0 auto;">
+                                {% else %}
+                                <span class="text-success small">
+                                    <i class="fas fa-check-circle"></i> تم استرداده
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'consignments:detail' consignment.pk %}" class="btn btn-secondary">
+            <i class="fas fa-times me-1"></i>إلغاء
+        </a>
+        <button type="submit" class="btn btn-warning text-dark btn-lg">
+            <i class="fas fa-save me-1"></i>حفظ المرتجع
+        </button>
+    </div>
+</form>
+{% endblock %}

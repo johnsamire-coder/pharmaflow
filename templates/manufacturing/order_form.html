@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+{% block title %}أمر تصنيع جديد{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">أمر تصنيع جديد</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">الصنف</label>{{ form.product }}</div>
+                <div class="col-md-6"><label class="form-label">المصنع</label>{{ form.factory }}</div>
+                <div class="col-md-4"><label class="form-label">الكمية المطلوبة</label>{{ form.quantity_requested }}</div>
+                <div class="col-md-4"><label class="form-label">تاريخ الأمر</label>{{ form.order_date }}</div>
+                <div class="col-md-4"><label class="form-label">تاريخ التسليم المتوقع</label>{{ form.expected_delivery }}</div>
+                <div class="col-12"><label class="form-label">ملاحظات</label>{{ form.notes }}</div>
+            </div>
+            <div class="mt-4">
+                <button class="btn btn-primary">إنشاء أمر التصنيع</button>
+                <a href="{% url 'manufacturing:order_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

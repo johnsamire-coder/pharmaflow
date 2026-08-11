@@ -1,0 +1,113 @@
+{% extends "core/base.html" %}
+{% block title %}تفاصيل المرتجع{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">مرتجع رقم: {{ return_order.return_number }}</h3>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if return_order.status == 'pending' %}
+        <form method="post" action="{% url 'returns:return_approve' return_order.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-success">✅ اعتماد</button>
+        </form>
+        <form method="post" action="{% url 'returns:return_reject' return_order.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-danger">❌ رفض</button>
+        </form>
+        {% endif %}
+        {% if return_order.status == 'approved' %}
+        <a href="{% url 'returns:return_receive' return_order.pk %}" class="btn btn-primary">📦 استلام بالمخزن</a>
+        {% endif %}
+        <a href="{% url 'returns:return_list' %}" class="btn btn-light">رجوع</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>العميل:</strong> {{ return_order.customer.pharmacy_name }}</div>
+                    <div class="col-md-6"><strong>التاريخ:</strong> {{ return_order.return_date }}</div>
+                    <div class="col-md-6"><strong>الفاتورة الأصلية:</strong> {{ return_order.invoice.invoice_number|default:"-" }}</div>
+                    <div class="col-md-6"><strong>السبب:</strong> {{ return_order.get_return_reason_display }}</div>
+                    <div class="col-md-6"><strong>المندوب:</strong> {{ return_order.rep.full_name|default:return_order.rep.username }}</div>
+                    <div class="col-md-6">
+                        <strong>الحالة:</strong>
+                        {% if return_order.status == 'pending' %}<span class="badge bg-warning text-dark">في الانتظار</span>
+                        {% elif return_order.status == 'approved' %}<span class="badge bg-info text-dark">معتمد</span>
+                        {% elif return_order.status == 'received' %}<span class="badge bg-success">مستلم</span>
+                        {% elif return_order.status == 'rejected' %}<span class="badge bg-danger">مرفوض</span>
+                        {% endif %}
+                    </div>
+                    {% if return_order.notes %}
+                    <div class="col-12"><strong>ملاحظات:</strong> {{ return_order.notes }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <h6>إجمالي قيمة المرتجع</h6>
+                <h3 class="text-danger">{{ return_order.total_value|floatformat:2 }} جنيه</h3>
+                {% if return_order.credit_note %}
+                <hr>
+                <h6>إشعار دائن</h6>
+                <div class="badge bg-success fs-6">{{ return_order.credit_note.credit_note_number }}</div>
+                <div class="mt-1">{{ return_order.credit_note.amount|floatformat:2 }} جنيه</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-3">
+    <div class="card-body">
+        <h5 class="mb-3">الأصناف المرتجعة</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>الصنف</th>
+                        <th>التشغيلة</th>
+                        <th>الصلاحية</th>
+                        <th>الكمية</th>
+                        <th>السعر</th>
+                        <th>الإجمالي</th>
+                        <th>الحالة</th>
+                        <th>القرار</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in return_order.items.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.batch.batch_number }}</td>
+                        <td>{{ item.batch.expiry_date }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price|floatformat:2 }}</td>
+                        <td>{{ item.line_total|floatformat:2 }}</td>
+                        <td>
+                            {% if item.item_condition == 'good' %}<span class="badge bg-success">صالح</span>
+                            {% elif item.item_condition == 'damaged' %}<span class="badge bg-danger">تالف</span>
+                            {% elif item.item_condition == 'expired' %}<span class="badge bg-secondary">منتهي</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.disposition == 'return_to_stock' %}<span class="badge bg-info text-dark">إعادة للمخزن</span>
+                            {% elif item.disposition == 'destroy' %}<span class="badge bg-danger">إتلاف</span>
+                            {% elif item.disposition == 'quarantine' %}<span class="badge bg-warning text-dark">حجر صحي</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

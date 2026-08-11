@@ -1,0 +1,91 @@
+{% extends 'core/base.html' %}
+{% block title %}إضافة مخزون{% endblock %}
+{% block page_title %}إضافة مخزون جديد{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-plus-circle me-2"></i>إضافة مخزون</h2>
+    <a href="{% url 'inventory:list' %}" class="pf-btn pf-btn-secondary">
+        <i class="fas fa-arrow-right"></i> رجوع
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-box me-2 text-primary"></i>بيانات الدفعة</h6>
+                </div>
+                <div class="pf-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">المنتج <span class="required">*</span></label>
+                                {{ form.product }}
+                                {% if form.product.errors %}
+                                <div style="color:var(--pf-danger);font-size:12px;">{{ form.product.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">رقم الدفعة <span class="required">*</span></label>
+                                {{ form.batch_number }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الكمية <span class="required">*</span></label>
+                                {{ form.quantity_received }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">تاريخ الإنتاج</label>
+                                {{ form.production_date }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">تاريخ الانتهاء <span class="required">*</span></label>
+                                {{ form.expiry_date }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">سعر التكلفة</label>
+                                {{ form.cost_price }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">المورد</label>
+                                {{ form.supplier }}
+                            </div>
+                        </div>
+                        {% if form.notes %}
+                        <div class="col-12">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">ملاحظات</label>
+                                {{ form.notes }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="pf-card-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+                    <a href="{% url 'inventory:list' %}" class="pf-btn pf-btn-secondary">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                    <button type="submit" class="pf-btn pf-btn-primary pf-btn-lg">
+                        <i class="fas fa-save"></i> حفظ الدفعة
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

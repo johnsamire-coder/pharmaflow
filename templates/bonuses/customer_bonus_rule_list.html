@@ -1,0 +1,98 @@
+{% extends "core/base.html" %}
+{% block title %}قواعد البونص الخاصة{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">قواعد البونص الخاصة بالعملاء</h3>
+    <a href="{% url 'bonuses:customer_bonus_rule_create' %}" class="btn btn-primary">+ قاعدة خاصة جديدة</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-8">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث بالعميل أو الصنف">
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>فعال</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير فعال</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>العميل</th>
+                    <th>الصنف</th>
+                    <th>النوع</th>
+                    <th>القاعدة</th>
+                    <th>الفترة</th>
+                    <th>الاعتماد</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in rules %}
+                <tr>
+                    <td>{{ item.customer.pharmacy_name }}</td>
+                    <td>{{ item.product.product_name }}</td>
+                    <td>{{ item.get_bonus_type_display }}</td>
+                    <td>
+                        {% if item.bonus_type == 'quantity' %}
+                            {{ item.free_quantity }} على {{ item.buy_quantity }}
+                        {% elif item.bonus_type == 'fixed' %}
+                            {{ item.free_quantity }} ثابت
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ item.start_date|default:"-" }} → {{ item.end_date|default:"-" }}</td>
+                    <td>
+                        {% if item.approved_by %}
+                            <span class="badge bg-success">معتمد</span>
+                            <div class="small text-muted">{{ item.approved_by.full_name|default:item.approved_by.username }}</div>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">غير معتمد</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.is_active %}
+                            <span class="badge bg-success">فعال</span>
+                        {% else %}
+                            <span class="badge bg-secondary">غير فعال</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'bonuses:customer_bonus_rule_update' item.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a>
+                        {% if not item.approved_by %}
+                        <form method="post" action="{% url 'bonuses:customer_bonus_rule_approve' item.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-success">اعتماد</button>
+                        </form>
+                        {% endif %}
+                        <form method="post" action="{% url 'bonuses:customer_bonus_rule_toggle' item.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-warning">
+                                {% if item.is_active %}تعطيل{% else %}تفعيل{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center py-4">لا توجد قواعد خاصة</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

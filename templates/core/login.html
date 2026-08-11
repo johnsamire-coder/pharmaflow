@@ -1,0 +1,334 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول | PharmaFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: linear-gradient(135deg, #1a1d3a 0%, #2d1b69 50%, #4361ee 100%);
+            overflow: hidden;
+        }
+
+        /* Left Panel - Branding */
+        .login-brand {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+            color: white;
+        }
+
+        .login-brand::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+        }
+
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .brand-name {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .brand-tagline {
+            font-size: 16px;
+            opacity: 0.8;
+            text-align: center;
+            max-width: 300px;
+            line-height: 1.8;
+        }
+
+        .brand-features {
+            margin-top: 48px;
+            list-style: none;
+        }
+
+        .brand-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        .brand-features li i {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* Right Panel - Form */
+        .login-form-panel {
+            width: 480px;
+            min-height: 100vh;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            border-radius: 24px 0 0 24px;
+            box-shadow: -10px 0 60px rgba(0,0,0,0.2);
+        }
+
+        .login-form-inner {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .login-form-inner h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1a1d3a;
+            margin-bottom: 8px;
+        }
+
+        .login-form-inner .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 36px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #bbb;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 44px 14px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s;
+            background: #f8f9fc;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #4361ee;
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+            outline: none;
+            background: white;
+        }
+
+        .input-wrapper input:focus + i,
+        .input-wrapper input:focus ~ i {
+            color: #4361ee;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4361ee, #7209b7);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-error {
+            background: #fdedef;
+            color: #c01b30;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 32px;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        /* Animated bg circles */
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            animation: float 20s infinite;
+        }
+
+        .bg-circle:nth-child(1) { width: 300px; height: 300px; top: 10%; left: 10%; animation-delay: 0s; }
+        .bg-circle:nth-child(2) { width: 200px; height: 200px; bottom: 20%; right: 20%; animation-delay: 5s; }
+        .bg-circle:nth-child(3) { width: 150px; height: 150px; top: 60%; left: 30%; animation-delay: 10s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, -30px) rotate(5deg); }
+            50% { transform: translate(-15px, 20px) rotate(-5deg); }
+            75% { transform: translate(25px, 10px) rotate(3deg); }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .login-brand { display: none; }
+            .login-form-panel {
+                width: 100%;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Branding Panel -->
+    <div class="login-brand">
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+
+        <div class="brand-logo">
+            <i class="fas fa-capsules"></i>
+        </div>
+        <div class="brand-name">PharmaFlow</div>
+        <p class="brand-tagline">
+            نظام إدارة شركات الأدوية والمكملات الغذائية
+            <br>الأكثر تقدماً في المنطقة
+        </p>
+        <ul class="brand-features">
+            <li>
+                <i class="fas fa-chart-line"></i>
+                <span>لوحة تحكم ذكية وتقارير شاملة</span>
+            </li>
+            <li>
+                <i class="fas fa-warehouse"></i>
+                <span>إدارة المخزون بنظام FEFO</span>
+            </li>
+            <li>
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>فواتير ومبيعات احترافية</span>
+            </li>
+            <li>
+                <i class="fas fa-building"></i>
+                <span>نظام Multi-tenant SaaS</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Login Form Panel -->
+    <div class="login-form-panel">
+        <div class="login-form-inner">
+            <h2>مرحباً بك 👋</h2>
+            <p class="subtitle">قم بتسجيل الدخول للمتابعة</p>
+
+            {% if form.errors %}
+            <div class="login-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>اسم المستخدم أو كلمة المرور غير صحيحة</span>
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>اسم المستخدم</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="username"
+                               placeholder="أدخل اسم المستخدم"
+                               value="{{ form.username.value|default:'' }}"
+                               autocomplete="username" required>
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="password"
+                               placeholder="أدخل كلمة المرور"
+                               autocomplete="current-password" required>
+                        <i class="fas fa-lock"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    تسجيل الدخول
+                </button>
+            </form>
+
+            <div class="login-footer">
+                PharmaFlow SaaS &copy; 2024 | JS Solutions
+            </div>
+        </div>
+    </div>
+</body>
+</html>

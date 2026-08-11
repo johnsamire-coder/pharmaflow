@@ -1,0 +1,80 @@
+{% extends "core/base.html" %}
+{% block title %}الإشعارات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">
+        🔔 الإشعارات
+        {% if unread_count > 0 %}
+            <span class="badge bg-danger">{{ unread_count }}</span>
+        {% endif %}
+    </h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'notifications:run_checks' %}" class="btn btn-outline-info btn-sm">🔄 فحص الآن</a>
+        {% if unread_count > 0 %}
+        <form method="post" action="{% url 'notifications:mark_all_read' %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-secondary btn-sm">✅ تحديد الكل كمقروء</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3 no-print">
+    <div class="card-body py-2">
+        <div class="d-flex gap-2">
+            <a href="?" class="btn btn-sm {% if not filter_type %}btn-primary{% else %}btn-outline-primary{% endif %}">الكل</a>
+            <a href="?filter=unread" class="btn btn-sm {% if filter_type == 'unread' %}btn-warning{% else %}btn-outline-warning{% endif %}">غير مقروء</a>
+            <a href="?filter=read" class="btn btn-sm {% if filter_type == 'read' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">مقروء</a>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex flex-column gap-2">
+    {% for notif in notifications %}
+    <div class="card shadow-sm {% if not notif.is_read %}border-primary{% endif %}">
+        <div class="card-body py-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex gap-3 align-items-start">
+                    <div class="fs-3">
+                        {% if notif.notification_type == 'expiry_warning' %}⏰
+                        {% elif notif.notification_type == 'low_stock' %}📦
+                        {% elif notif.notification_type == 'cheque_due' %}🏦
+                        {% elif notif.notification_type == 'cheque_bounced' %}⚠️
+                        {% elif notif.notification_type == 'order_pending' %}📋
+                        {% elif notif.notification_type == 'approval_needed' %}✅
+                        {% elif notif.notification_type == 'credit_exceeded' %}💳
+                        {% else %}🔔
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="fw-bold {% if not notif.is_read %}text-primary{% endif %}">
+                            {{ notif.title }}
+                        </div>
+                        {% if notif.message %}
+                        <div class="text-muted small">{{ notif.message }}</div>
+                        {% endif %}
+                        <div class="text-muted small mt-1">{{ notif.created_at|date:"Y-m-d H:i" }}</div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    {% if not notif.is_read %}
+                    <span class="badge bg-primary">جديد</span>
+                    <form method="post" action="{% url 'notifications:mark_read' notif.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-secondary">تحديد كمقروء</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <div class="fs-1 mb-3">🔔</div>
+            <h5 class="text-muted">لا توجد إشعارات</h5>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

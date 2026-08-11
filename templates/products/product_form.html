@@ -1,0 +1,83 @@
+{% extends "core/base.html" %}
+{% block title %}المنتج{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{% if object %}تعديل منتج{% else %}منتج جديد{% endif %}</h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">كود الصنف</label>
+                    {{ form.product_code }}
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">اسم المنتج</label>
+                    {{ form.product_name }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">الاسم العلمي</label>
+                    {{ form.scientific_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">الباركود</label>
+                    {{ form.barcode }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">التصنيف</label>
+                    {{ form.category }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">الشكل</label>
+                    {{ form.form }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">الوحدة</label>
+                    {{ form.unit }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">عدد الوحدات بالعبوة</label>
+                    {{ form.units_per_pack }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">نسبة الضريبة</label>
+                    {{ form.tax_rate }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">سعر البيع</label>
+                    {{ form.selling_price }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الحد الأدنى للمخزون</label>
+                    {{ form.min_stock_level }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">صورة المنتج</label>
+                    {{ form.image }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">الوصف</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label">فعال</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button class="btn btn-primary">حفظ</button>
+                <a href="{% url 'products:product_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

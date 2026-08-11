@@ -1,0 +1,111 @@
+{% extends 'core/base.html' %}
+{% block title %}البونص{% endblock %}
+{% block page_title %}إدارة البونص{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-gift me-2"></i>البونص</h2>
+    <div class="pf-page-header-actions">
+        <a href="{% url 'bonuses:create' %}" class="pf-btn pf-btn-primary">
+            <i class="fas fa-plus"></i> بونص جديد
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-gift"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي البونص</div>
+                <div class="pf-stat-value">{{ bonuses.paginator.count|default:bonuses|length }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-check-circle"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">نشط</div>
+                <div class="pf-stat-value">{{ active_count|default:"--" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-boxes"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي الكميات</div>
+                <div class="pf-stat-value">{{ total_qty|default:"--" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-list me-2"></i>سجل البونص</h6>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>الفاتورة</th>
+                    <th>العميل</th>
+                    <th>المنتج</th>
+                    <th>الكمية</th>
+                    <th>النوع</th>
+                    <th>التاريخ</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bonus in bonuses %}
+                <tr>
+                    <td>
+                        {% if bonus.invoice %}
+                        <a href="{% url 'sales:detail' bonus.invoice.pk %}"
+                           style="color:var(--pf-primary);text-decoration:none;font-weight:700;">
+                            {{ bonus.invoice.invoice_number }}
+                        </a>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td style="font-weight:600;">
+                        {% if bonus.invoice %}{{ bonus.invoice.customer.customer_name }}{% else %}-{% endif %}
+                    </td>
+                    <td style="font-weight:600;">{{ bonus.product.product_name }}</td>
+                    <td>
+                        <span style="font-weight:800;font-size:16px;color:var(--pf-warning);">
+                            {{ bonus.bonus_quantity }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if bonus.bonus_type == 'percentage' %}
+                        <span class="pf-badge pf-badge-primary">نسبة {{ bonus.bonus_value }}%</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-warning">كمية</span>
+                        {% endif %}
+                    </td>
+                    <td style="color:#888;font-size:13px;">{{ bonus.created_at|date:"Y/m/d" }}</td>
+                    <td>
+                        <a href="{% url 'bonuses:detail' bonus.pk %}" class="pf-btn-icon" title="تفاصيل">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="pf-empty">
+                            <i class="fas fa-gift"></i>
+                            <h5>لا يوجد بونص</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

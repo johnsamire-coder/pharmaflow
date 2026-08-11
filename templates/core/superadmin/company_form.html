@@ -1,0 +1,48 @@
+{% extends "core/base.html" %}
+{% block title %}شركة جديدة{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">إنشاء شركة جديدة</h3>
+        <form method="post">
+            {% csrf_token %}
+            <h5 class="mb-3 text-primary">بيانات الشركة</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">اسم الشركة <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">الإيميل</label>
+                    <input type="email" name="email" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">التليفون</label>
+                    <input type="text" name="phone" class="form-control">
+                </div>
+            </div>
+
+            <h5 class="mb-3 text-primary">بيانات مدير النظام</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
+                    <input type="text" name="admin_username" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الاسم الكامل</label>
+                    <input type="text" name="admin_fullname" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">كلمة المرور <span class="text-danger">*</span></label>
+                    <input type="password" name="admin_password" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">إنشاء الشركة</button>
+                <a href="{% url 'core:superadmin_dashboard' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

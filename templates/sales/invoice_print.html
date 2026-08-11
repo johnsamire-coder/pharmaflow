@@ -1,0 +1,115 @@
+{% load sales_extras %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>فاتورة {{ invoice.invoice_number }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <style>
+        @media print { .no-print { display: none !important; } }
+        body { font-family: Tahoma, Arial, sans-serif; font-size: 13px; }
+        .invoice-box { border: 1px solid #ccc; padding: 20px; margin-bottom: 10px; }
+        .cut-line { border-top: 2px dashed #999; margin: 15px 0; text-align: center; color: #999; font-size: 11px; }
+        th, td { padding: 5px 8px; }
+    </style>
+</head>
+<body>
+<div class="no-print text-center py-3">
+    <button onclick="window.print()" class="btn btn-primary">🖨️ طباعة</button>
+    <button onclick="window.close()" class="btn btn-light">إغلاق</button>
+</div>
+
+{% for copy_label in "أصل الفاتورة,صورة الفاتورة"|split:"," %}
+<div class="invoice-box">
+    <div class="row mb-3">
+        <div class="col-8">
+            {% if company_info %}
+                <h4>{{ company_info.company_name }}</h4>
+                <div>{{ company_info.address|default:"" }}</div>
+                <div>تليفون: {{ company_info.phone|default:"" }}</div>
+                <div>البطاقة الضريبية: {{ company_info.tax_number|default:"" }}</div>
+                <div>السجل التجاري: {{ company_info.commercial_register|default:"" }}</div>
+            {% endif %}
+        </div>
+        <div class="col-4 text-end">
+            <h4 class="text-primary">فاتورة ضريبية</h4>
+            <div><strong>رقم:</strong> {{ invoice.invoice_number }}</div>
+            <div><strong>التاريخ:</strong> {{ invoice.invoice_date }}</div>
+            <div class="badge bg-secondary">{{ copy_label }}</div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-6">
+            <strong>العميل:</strong> {{ invoice.customer.pharmacy_name }}<br>
+            <strong>العنوان:</strong> {{ invoice.customer.address|default:"-" }}<br>
+            <strong>الرقم الضريبي:</strong> {{ invoice.customer.tax_number|default:"-" }}
+        </div>
+        <div class="col-6">
+            <strong>المندوب:</strong> {{ invoice.rep.full_name|default:invoice.rep.username }}<br>
+            <strong>طريقة السداد:</strong> {{ invoice.sales_order.get_payment_method_display }}<br>
+            <strong>تاريخ الاستحقاق:</strong> {{ invoice.due_date|default:"-" }}
+        </div>
+    </div>
+
+    <table class="table table-bordered table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>الصنف</th>
+                <th>التشغيلة</th>
+                <th>الصلاحية</th>
+                <th>الكمية</th>
+                <th>السعر</th>
+                <th>الإجمالي</th>
+                <th>ملاحظة</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice_items %}
+            <tr {% if item.is_bonus %}style="background:#fffde7"{% endif %}>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.product.product_name }}</td>
+                <td>{{ item.batch.batch_number }}</td>
+                <td>{{ item.batch.expiry_date }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{% if item.is_bonus %}0{% else %}{{ item.unit_price|floatformat:2 }}{% endif %}</td>
+                <td>{% if item.is_bonus %}0{% else %}{{ item.line_total|floatformat:2 }}{% endif %}</td>
+                <td>{% if item.is_bonus %}بونص{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="6" class="text-end"><strong>الإجمالي قبل الضريبة:</strong></td>
+                <td colspan="2"><strong>{{ invoice.subtotal|floatformat:2 }}</strong></td>
+            </tr>
+            <tr>
+                <td colspan="6" class="text-end">ضريبة القيمة المضافة 14%:</td>
+                <td colspan="2">{{ invoice.tax_amount|floatformat:2 }}</td>
+            </tr>
+            <tr class="table-primary">
+                <td colspan="6" class="text-end fw-bold">الإجمالي:</td>
+                <td colspan="2" class="fw-bold">{{ invoice.total_amount|floatformat:2 }} جنيه</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    {% if company_info and company_info.invoice_notes %}
+    <div class="text-muted small mb-3">{{ company_info.invoice_notes }}</div>
+    {% endif %}
+
+    <div class="row mt-4">
+        <div class="col-4 text-center border-top pt-2">توقيع المندوب</div>
+        <div class="col-4 text-center border-top pt-2">توقيع الاستلام</div>
+        <div class="col-4 text-center border-top pt-2">الختم</div>
+    </div>
+</div>
+
+{% if forloop.first %}
+<div class="cut-line">✂ خط القطع</div>
+{% endif %}
+{% endfor %}
+
+</body>
+</html>

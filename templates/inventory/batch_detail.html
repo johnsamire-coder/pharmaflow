@@ -1,0 +1,92 @@
+{% extends "core/base.html" %}
+{% block title %}تفاصيل التشغيلة{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">تفاصيل التشغيلة {{ batch.batch_number }}</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'inventory:batch_update' batch.pk %}" class="btn btn-primary">تعديل</a>
+        <a href="{% url 'inventory:batch_list' %}" class="btn btn-light">رجوع</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4"><strong>الصنف:</strong> {{ batch.product.product_name }}</div>
+            <div class="col-md-4"><strong>الكمية المستلمة:</strong> {{ batch.quantity_received }}</div>
+            <div class="col-md-4"><strong>الفاقد:</strong> {{ batch.quantity_defective }}</div>
+            <div class="col-md-4"><strong>الإنتاج:</strong> {{ batch.production_date }}</div>
+            <div class="col-md-4"><strong>الصلاحية:</strong> {{ batch.expiry_date }}</div>
+            <div class="col-md-4"><strong>الاستلام:</strong> {{ batch.received_date }}</div>
+            <div class="col-md-4"><strong>التكلفة:</strong> {{ batch.unit_cost }}</div>
+            <div class="col-md-4"><strong>المتاح:</strong> {{ batch.quantity_available_total }}</div>
+            <div class="col-md-4"><strong>الحالة:</strong> {{ batch.get_status_display }}</div>
+            <div class="col-12"><strong>ملاحظات:</strong> {{ batch.notes|default:"-" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="mb-3">الرصيد حسب المخزن</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>المخزن</th>
+                        <th>متاح</th>
+                        <th>محجوز</th>
+                        <th>تحت التصريف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in batch.inventory_rows.all %}
+                    <tr>
+                        <td>{{ row.warehouse.warehouse_name }}</td>
+                        <td>{{ row.quantity_available }}</td>
+                        <td>{{ row.quantity_reserved }}</td>
+                        <td>{{ row.quantity_on_consignment }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">لا يوجد رصيد</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="mb-3">حركات المخزون</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>النوع</th>
+                        <th>الكمية</th>
+                        <th>المخزن</th>
+                        <th>مرجع</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mv in batch.movements.all %}
+                    <tr>
+                        <td>{{ mv.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ mv.get_movement_type_display }}</td>
+                        <td>{{ mv.quantity }}</td>
+                        <td>{{ mv.warehouse.warehouse_name }}</td>
+                        <td>{{ mv.reference_type|default:"-" }} {{ mv.reference_id|default:"" }}</td>
+                        <td>{{ mv.notes|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center">لا توجد حركات</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

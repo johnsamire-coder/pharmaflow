@@ -1,0 +1,65 @@
+{% extends "core/base.html" %}
+{% block title %}كارت العميل{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">كارت العميل</h3>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'customers:customer_update' customer.pk %}" class="btn btn-primary">تعديل</a>
+        <a href="{% url 'collections:customer_statement' customer.pk %}" class="btn btn-outline-info">كشف حساب</a>
+        <a href="{% url 'collections:collection_create' %}?customer_id={{ customer.pk }}" class="btn btn-success">+ سند قبض</a>
+        <a href="{% url 'sales:order_create' %}" class="btn btn-outline-primary">+ أوردر</a>
+        <a href="{% url 'customers:customer_list' %}" class="btn btn-light">رجوع</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4"><strong>الكود:</strong> {{ customer.customer_code }}</div>
+                    <div class="col-md-8"><strong>الصيدلية:</strong> {{ customer.pharmacy_name }}</div>
+                    <div class="col-md-6"><strong>المسؤول:</strong> {{ customer.contact_person|default:"-" }}</div>
+                    <div class="col-md-3"><strong>التليفون:</strong> {{ customer.phone|default:"-" }}</div>
+                    <div class="col-md-3"><strong>واتساب:</strong> {{ customer.whatsapp|default:"-" }}</div>
+                    <div class="col-md-4"><strong>المنطقة:</strong> {{ customer.area.area_name|default:"-" }}</div>
+                    <div class="col-md-4"><strong>خط السير:</strong> {{ customer.route.route_name|default:"-" }}</div>
+                    <div class="col-md-4"><strong>المندوب:</strong> {{ customer.rep.full_name|default:customer.rep.username|default:"-" }}</div>
+                    <div class="col-md-6"><strong>نوع التعامل:</strong> {{ customer.get_payment_type_display }}</div>
+                    <div class="col-md-6"><strong>أيام السداد:</strong> {{ customer.payment_days }}</div>
+                    <div class="col-12"><strong>العنوان:</strong> {{ customer.address|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm {% if balance.credit_exceeded %}border-danger{% elif balance.balance_due > 0 %}border-warning{% else %}border-success{% endif %}">
+            <div class="card-body">
+                <h5 class="mb-3">الرصيد الحالي</h5>
+                <table class="table table-sm mb-0">
+                    <tr><td>إجمالي المبيعات</td><td class="text-end">{{ balance.total_invoiced|floatformat:2 }}</td></tr>
+                    <tr><td>إجمالي التحصيل</td><td class="text-end text-success">{{ balance.total_paid|floatformat:2 }}</td></tr>
+                    <tr><td>المرتجعات</td><td class="text-end">{{ balance.total_returns|floatformat:2 }}</td></tr>
+                    <tr class="table-warning fw-bold">
+                        <td>الرصيد المستحق</td>
+                        <td class="text-end">{{ balance.balance_due|floatformat:2 }}</td>
+                    </tr>
+                    <tr><td>حد الائتمان</td><td class="text-end">{{ balance.credit_limit|floatformat:2 }}</td></tr>
+                    <tr {% if balance.credit_exceeded %}class="table-danger"{% else %}class="table-success"{% endif %}>
+                        <td>متاح من الائتمان</td>
+                        <td class="text-end">{{ balance.credit_available|floatformat:2 }}</td>
+                    </tr>
+                </table>
+                {% if balance.credit_exceeded %}
+                    <div class="alert alert-danger mt-3 mb-0 py-2">⚠️ تجاوز حد الائتمان</div>
+                {% endif %}
+                <hr>
+                <a href="{% url 'collections:customer_statement' customer.pk %}" class="btn btn-outline-primary w-100">
+                    عرض كشف الحساب الكامل
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

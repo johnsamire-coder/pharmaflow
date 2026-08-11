@@ -1,0 +1,247 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ customer.customer_name }}{% endblock %}
+{% block page_title %}تفاصيل العميل{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <div>
+        <h2><i class="fas fa-user-tie me-2"></i>{{ customer.customer_name }}</h2>
+        <div style="margin-top:4px;">
+            {% if customer.is_active %}
+            <span class="pf-badge pf-badge-success">نشط</span>
+            {% else %}
+            <span class="pf-badge pf-badge-secondary">غير نشط</span>
+            {% endif %}
+            {% if customer.customer_code %}
+            <span class="pf-badge pf-badge-secondary" style="margin-right:8px;">{{ customer.customer_code }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pf-page-header-actions">
+        <a href="{% url 'sales:create' %}?customer={{ customer.pk }}" class="pf-btn pf-btn-success">
+            <i class="fas fa-plus"></i> فاتورة جديدة
+        </a>
+        <a href="{% url 'customers:edit' customer.pk %}" class="pf-btn pf-btn-primary">
+            <i class="fas fa-edit"></i> تعديل
+        </a>
+        <a href="{% url 'customers:list' %}" class="pf-btn pf-btn-secondary">
+            <i class="fas fa-arrow-right"></i> رجوع
+        </a>
+    </div>
+</div>
+
+<!-- ملخص مالي سريع -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-file-invoice"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي الفواتير</div>
+                <div class="pf-stat-value">{{ total_invoices|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-money-bill"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي المبيعات</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ total_sales|floatformat:2|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-clock"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">الرصيد المستحق</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ customer.current_balance|floatformat:2|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card {% if customer.current_balance > customer.credit_limit %}stat-danger{% else %}stat-success{% endif %}">
+            <div class="pf-stat-icon {% if customer.current_balance > customer.credit_limit %}icon-danger{% else %}icon-success{% endif %}">
+                <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">حد الائتمان</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ customer.credit_limit|floatformat:2|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- بيانات العميل -->
+    <div class="col-md-4">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-id-card me-2"></i>البيانات الأساسية</h6>
+            </div>
+            <div class="pf-card-body">
+                <div class="pf-info-grid" style="grid-template-columns:1fr;">
+                    <div class="pf-info-item">
+                        <div class="label">الاسم</div>
+                        <div class="value">{{ customer.customer_name }}</div>
+                    </div>
+                    {% if customer.phone %}
+                    <div class="pf-info-item">
+                        <div class="label">الهاتف</div>
+                        <div class="value">
+                            <a href="tel:{{ customer.phone }}" style="color:var(--pf-primary);text-decoration:none;">
+                                <i class="fas fa-phone me-1"></i>{{ customer.phone }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if customer.phone2 %}
+                    <div class="pf-info-item">
+                        <div class="label">هاتف 2</div>
+                        <div class="value">{{ customer.phone2 }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.area %}
+                    <div class="pf-info-item">
+                        <div class="label">المنطقة</div>
+                        <div class="value">{{ customer.area }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.address %}
+                    <div class="pf-info-item">
+                        <div class="label">العنوان</div>
+                        <div class="value" style="font-size:13px;">{{ customer.address }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.tax_number %}
+                    <div class="pf-info-item">
+                        <div class="label">الرقم الضريبي</div>
+                        <div class="value">{{ customer.tax_number }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- رصيد وائتمان -->
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-wallet me-2"></i>الوضع المالي</h6>
+            </div>
+            <div class="pf-card-body">
+                <div style="margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                        <span style="font-size:13px;color:#888;">استخدام الائتمان</span>
+                        <span style="font-weight:700;">
+                            {% if customer.credit_limit %}
+                                {% widthratio customer.current_balance customer.credit_limit 100 %}%
+                            {% else %}0%{% endif %}
+                        </span>
+                    </div>
+                    <div class="pf-progress">
+                        <div class="pf-progress-bar {% if customer.current_balance > customer.credit_limit %}bar-danger{% else %}bar-primary{% endif %}"
+                             style="width:{% if customer.credit_limit %}{% widthratio customer.current_balance customer.credit_limit 100 %}%{% else %}0%{% endif %}">
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                    <span style="font-size:12px;color:#aaa;">0</span>
+                    <span style="font-size:12px;color:#aaa;">{{ customer.credit_limit|floatformat:0|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- آخر الفواتير -->
+    <div class="col-md-8">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-file-invoice me-2"></i>آخر الفواتير</h6>
+                <a href="{% url 'sales:list' %}?customer={{ customer.pk }}" class="pf-btn pf-btn-sm pf-btn-outline">
+                    عرض الكل
+                </a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="pf-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ</th>
+                            <th>المبلغ</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in recent_invoices %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'sales:detail' inv.pk %}"
+                                   style="color:var(--pf-primary);text-decoration:none;font-weight:700;">
+                                    {{ inv.invoice_number }}
+                                </a>
+                            </td>
+                            <td style="color:#888;font-size:13px;">{{ inv.invoice_date|date:"Y/m/d" }}</td>
+                            <td style="font-weight:700;">{{ inv.total_amount|floatformat:2 }}</td>
+                            <td style="color:var(--pf-danger);font-weight:600;">{{ inv.remaining_amount|floatformat:2 }}</td>
+                            <td>
+                                {% if inv.status == 'paid' %}
+                                <span class="pf-badge pf-badge-success">مدفوعة</span>
+                                {% elif inv.status == 'partial' %}
+                                <span class="pf-badge pf-badge-warning">جزئية</span>
+                                {% else %}
+                                <span class="pf-badge pf-badge-danger">غير مدفوعة</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center;color:#aaa;padding:32px;">لا توجد فواتير</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- آخر التحصيلات -->
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-hand-holding-usd me-2"></i>آخر التحصيلات</h6>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="pf-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>المبلغ</th>
+                            <th>طريقة الدفع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for col in recent_collections %}
+                        <tr>
+                            <td style="color:#888;font-size:13px;">{{ col.collection_date|date:"Y/m/d" }}</td>
+                            <td style="font-weight:700;color:var(--pf-success);">{{ col.amount|floatformat:2 }}</td>
+                            <td>
+                                {% if col.payment_method == 'cash' %}
+                                <span class="pf-badge pf-badge-success">نقدي</span>
+                                {% elif col.payment_method == 'cheque' %}
+                                <span class="pf-badge pf-badge-warning">شيك</span>
+                                {% else %}
+                                <span class="pf-badge pf-badge-info">{{ col.payment_method }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" style="text-align:center;color:#aaa;padding:24px;">لا توجد تحصيلات</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

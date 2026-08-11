@@ -1,0 +1,26 @@
+{% extends "core/base.html" %}
+{% block title %}التصنيف{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{% if object %}تعديل تصنيف{% else %}تصنيف جديد{% endif %}</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">اسم التصنيف</label>
+                {{ form.category_name }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">الوصف</label>
+                {{ form.description }}
+            </div>
+            <div class="form-check mb-3">
+                {{ form.is_active }}
+                <label class="form-check-label">فعال</label>
+            </div>
+            <button class="btn btn-primary">حفظ</button>
+            <a href="{% url 'products:category_list' %}" class="btn btn-light">إلغاء</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

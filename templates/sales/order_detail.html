@@ -1,0 +1,93 @@
+{% extends "core/base.html" %}
+{% block title %}تفاصيل الأوردر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">أوردر رقم: {{ order.order_number }}</h3>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if order.status == 'pending_approval' %}
+            <form method="post" action="{% url 'sales:order_approve' order.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-success">✅ اعتماد</button>
+            </form>
+            <form method="post" action="{% url 'sales:order_reject' order.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-danger">❌ رفض</button>
+            </form>
+        {% endif %}
+        {% if order.status in 'approved,preparing,ready' %}
+            <form method="post" action="{% url 'sales:order_issue_invoice' order.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-primary">📄 إصدار فاتورة</button>
+            </form>
+        {% endif %}
+        {% if order.status == 'delivered' and order.invoice %}
+            <a href="{% url 'sales:invoice_detail' order.invoice.pk %}" class="btn btn-outline-info">عرض الفاتورة</a>
+            <a href="{% url 'sales:invoice_print' order.invoice.pk %}" class="btn btn-outline-dark" target="_blank">🖨️ طباعة</a>
+        {% endif %}
+        <a href="{% url 'sales:order_list' %}" class="btn btn-light">رجوع</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>العميل:</strong> {{ order.customer.pharmacy_name }}</div>
+                    <div class="col-md-6"><strong>المندوب:</strong> {{ order.rep.full_name|default:order.rep.username }}</div>
+                    <div class="col-md-4"><strong>التاريخ:</strong> {{ order.order_date }}</div>
+                    <div class="col-md-4"><strong>نوع البيع:</strong> {{ order.get_order_type_display }}</div>
+                    <div class="col-md-4"><strong>طريقة السداد:</strong> {{ order.get_payment_method_display }}</div>
+                    <div class="col-12"><strong>ملاحظات:</strong> {{ order.notes|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><td>الإجمالي:</td><td class="text-end">{{ order.subtotal|floatformat:2 }}</td></tr>
+                    <tr><td>الضريبة 14%:</td><td class="text-end">{{ order.tax_amount|floatformat:2 }}</td></tr>
+                    <tr class="table-primary fw-bold"><td>الصافي:</td><td class="text-end">{{ order.total_amount|floatformat:2 }}</td></tr>
+                    <tr><td>البونص:</td><td class="text-end">{{ order.bonus_value|floatformat:2 }}</td></tr>
+                </table>
+                <hr>
+                <div class="text-center">
+                    {% if order.status == 'pending_approval' %}<span class="badge bg-warning text-dark fs-6">في انتظار الاعتماد</span>
+                    {% elif order.status == 'approved' %}<span class="badge bg-info text-dark fs-6">معتمد</span>
+                    {% elif order.status == 'delivered' %}<span class="badge bg-success fs-6">تم التسليم</span>
+                    {% elif order.status == 'cancelled' %}<span class="badge bg-danger fs-6">ملغي</span>
+                    {% else %}<span class="badge bg-secondary fs-6">{{ order.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-3">
+    <div class="card-body">
+        <h5 class="mb-3">الأصناف</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>#</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th><th>بونص</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price|floatformat:2 }}</td>
+                        <td>{{ item.line_total|floatformat:2 }}</td>
+                        <td>{% if item.bonus_quantity > 0 %}<span class="badge bg-warning text-dark">{{ item.bonus_quantity }}</span>{% else %}-{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

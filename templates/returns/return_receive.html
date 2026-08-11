@@ -1,0 +1,34 @@
+{% extends "core/base.html" %}
+{% block title %}استلام المرتجع{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">استلام مرتجع: {{ return_order.return_number }}</h3>
+        <p class="text-muted">العميل: <strong>{{ return_order.customer.pharmacy_name }}</strong></p>
+        <p class="text-muted">القيمة: <strong>{{ return_order.total_value|floatformat:2 }} جنيه</strong></p>
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold">اختر المخزن للاستلام:</label>
+                <select name="warehouse_id" class="form-select" required>
+                    <option value="">-- اختر المخزن --</option>
+                    {% for w in warehouses %}
+                        <option value="{{ w.id }}">{{ w.warehouse_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="alert alert-info">
+                <strong>ملاحظة:</strong>
+                <ul class="mb-0">
+                    <li>الأصناف الصالحة ستُضاف للمخزن تلقائياً</li>
+                    <li>الأصناف التالفة ستُسجل كإتلاف</li>
+                    <li>سيتم إصدار إشعار دائن تلقائياً</li>
+                </ul>
+            </div>
+            <button type="submit" class="btn btn-primary">تأكيد الاستلام وإصدار الإشعار الدائن</button>
+            <a href="{% url 'returns:return_detail' return_order.pk %}" class="btn btn-light">إلغاء</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+{% block title %}قاعدة بونص عامة{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{{ title }}</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">الصنف</label>
+                    {{ form.product }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">نوع البونص</label>
+                    {{ form.bonus_type }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">اشترِ كمية</label>
+                    {{ form.buy_quantity }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">كمية مجانية</label>
+                    {{ form.free_quantity }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">نسبة الخصم %</label>
+                    {{ form.discount_percentage }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">من تاريخ</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">إلى تاريخ</label>
+                    {{ form.end_date }}
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label">فعال</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button class="btn btn-primary">حفظ</button>
+                <a href="{% url 'bonuses:bonus_rule_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleBonusFields() {
+    const type = document.getElementById('id_bonus_type').value;
+}
+document.addEventListener('DOMContentLoaded', toggleBonusFields);
+</script>
+{% endblock %}

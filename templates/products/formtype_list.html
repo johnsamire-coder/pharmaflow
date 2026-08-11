@@ -1,0 +1,71 @@
+{% extends "core/base.html" %}
+{% block title %}أشكال المنتجات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">أشكال المنتجات</h3>
+    <a href="{% url 'products:formtype_create' %}" class="btn btn-primary">+ شكل جديد</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-6">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث بالاسم">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>فعال</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير فعال</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>الشكل</th>
+                    <th>الوصف</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for item in forms_list %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.form_name }}</td>
+                    <td>{{ item.description|default:"-" }}</td>
+                    <td>
+                        {% if item.is_active %}
+                            <span class="badge bg-success">فعال</span>
+                        {% else %}
+                            <span class="badge bg-secondary">غير فعال</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-flex gap-2">
+                        <a href="{% url 'products:formtype_update' item.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a>
+                        <form method="post" action="{% url 'products:formtype_toggle_status' item.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-warning">
+                                {% if item.is_active %}تعطيل{% else %}تفعيل{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center py-4">لا توجد بيانات</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

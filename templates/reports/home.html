@@ -1,0 +1,55 @@
+{% extends "core/base.html" %}
+{% block title %}التقارير{% endblock %}
+{% block content %}
+<h3 class="mb-4">التقارير</h3>
+
+<div class="row g-3">
+    <div class="col-md-3">
+        <a href="{% url 'reports:sales_report' %}" class="text-decoration-none">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body py-4">
+                    <div class="fs-1 mb-2">📊</div>
+                    <h5>تقرير المبيعات</h5>
+                    <p class="text-muted small">مبيعات حسب العميل والمنتج والمندوب</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-3">
+        <a href="{% url 'reports:collections_report' %}" class="text-decoration-none">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body py-4">
+                    <div class="fs-1 mb-2">💰</div>
+                    <h5>تقرير التحصيل</h5>
+                    <p class="text-muted small">التحصيلات حسب الطريقة والعميل</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-3">
+        <a href="{% url 'reports:inventory_report' %}" class="text-decoration-none">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body py-4">
+                    <div class="fs-1 mb-2">📦</div>
+                    <h5>تقرير المخزون</h5>
+                    <p class="text-muted small">رصيد المخزون والتشغيلات والصلاحيات</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-3">
+        <a href="{% url 'reports:aging_report' %}" class="text-decoration-none">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body py-4">
+                    <div class="fs-1 mb-2">⏳</div>
+                    <h5>أعمار الديون</h5>
+                    <p class="text-muted small">تحليل المديونيات حسب الفترات</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "core/base.html" %}
+{% block title %}التحصيلات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">التحصيلات / سندات القبض</h3>
+    <a href="{% url 'collections:collection_create' %}" class="btn btn-primary">+ سند قبض جديد</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6>إجمالي التحصيل المؤكد</h6>
+                <h4 class="text-success">{{ total_confirmed|floatformat:2 }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث برقم السند / العميل">
+            </div>
+            <div class="col-md-2">
+                <select name="customer" class="form-select">
+                    <option value="">كل العملاء</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}" {% if request.GET.customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.pharmacy_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="method" class="form-select">
+                    <option value="">كل الطرق</option>
+                    {% for key, label in method_choices %}
+                        <option value="{{ key }}" {% if request.GET.method == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    {% for key, label in status_choices %}
+                        <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>رقم السند</th>
+                    <th>العميل</th>
+                    <th>التاريخ</th>
+                    <th>المبلغ</th>
+                    <th>طريقة السداد</th>
+                    <th>الحالة</th>
+                    <th>بواسطة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in collections %}
+                <tr>
+                    <td>{{ item.receipt_number }}</td>
+                    <td>{{ item.customer.pharmacy_name }}</td>
+                    <td>{{ item.collection_date }}</td>
+                    <td class="fw-bold">{{ item.amount|floatformat:2 }}</td>
+                    <td>{{ item.get_payment_method_display }}</td>
+                    <td>
+                        {% if item.status == 'confirmed' %}<span class="badge bg-success">مؤكد</span>
+                        {% elif item.status == 'pending' %}<span class="badge bg-warning text-dark">معلق</span>
+                        {% elif item.status == 'pending_clearance' %}<span class="badge bg-info text-dark">تحت التحصيل</span>
+                        {% elif item.status == 'bounced' %}<span class="badge bg-danger">مرتجع</span>
+                        {% elif item.status == 'cancelled' %}<span class="badge bg-secondary">ملغي</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.collected_by.full_name|default:item.collected_by.username }}</td>
+                    <td class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'collections:collection_detail' item.pk %}" class="btn btn-sm btn-outline-info">عرض</a>
+                        <a href="{% url 'collections:collection_print' item.pk %}" class="btn btn-sm btn-outline-dark" target="_blank">طباعة</a>
+                        {% if item.status != 'bounced' and item.status != 'cancelled' %}
+                        <a href="{% url 'collections:collection_update' item.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a>
+                        {% endif %}
+                        {% if item.status == 'pending' or item.status == 'pending_clearance' %}
+                        <form method="post" action="{% url 'collections:collection_confirm' item.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-success">تأكيد</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center py-4">لا توجد تحصيلات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "core/base.html" %}
+{% block title %}أوردر جديد{% endblock %}
+{% block content %}
+<h3 class="mb-4">أوردر جديد</h3>
+
+<form method="post" id="orderForm">
+    {% csrf_token %}
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">بيانات الأوردر</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">العميل</label>
+                    {{ form.customer }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">التاريخ</label>
+                    {{ form.order_date }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">نوع البيع</label>
+                    {{ form.order_type }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">طريقة السداد</label>
+                    {{ form.payment_method }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">ملاحظات</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">الأصناف</h5>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addRow()">+ إضافة صنف</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" id="itemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الصنف</th>
+                            <th>الكمية</th>
+                            <th>السعر</th>
+                            <th>الإجمالي</th>
+                            <th>حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsBody">
+                        <tr id="row_0">
+                            <td>
+                                <select name="product_id" class="form-select form-select-sm product-select" onchange="updatePrice(this)">
+                                    <option value="">-- اختر صنف --</option>
+                                    {% for p in products %}
+                                        <option value="{{ p.id }}" data-price="{{ p.selling_price }}">{{ p.product_name }} ({{ p.selling_price }})</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" name="quantity" class="form-control form-control-sm qty-input" min="1" value="1" onchange="updateRowTotal(this)"></td>
+                            <td><input type="number" name="unit_price" class="form-control form-control-sm price-input" step="0.01" value="0" onchange="updateRowTotal(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm row-total" readonly value="0"></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">حذف</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body text-end">
+            <table class="table table-sm w-auto ms-auto">
+                <tr><td>الإجمالي قبل الضريبة:</td><td id="subtotalDisplay" class="fw-bold">0.00</td></tr>
+                <tr><td>ضريبة 14%:</td><td id="taxDisplay">0.00</td></tr>
+                <tr class="table-primary fw-bold"><td>الإجمالي:</td><td id="totalDisplay">0.00</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">إرسال للاعتماد</button>
+        <a href="{% url 'sales:order_list' %}" class="btn btn-light">إلغاء</a>
+    </div>
+</form>
+
+<script>
+let rowCount = 1;
+
+function addRow() {
+    const tbody = document.getElementById('itemsBody');
+    const firstRow = document.getElementById('row_0');
+    const newRow = firstRow.cloneNode(true);
+    newRow.id = 'row_' + rowCount;
+    newRow.querySelector('.product-select').value = '';
+    newRow.querySelector('.qty-input').value = 1;
+    newRow.querySelector('.price-input').value = 0;
+    newRow.querySelector('.row-total').value = 0;
+    tbody.appendChild(newRow);
+    rowCount++;
+    setupEventListeners(newRow);
+}
+
+function setupEventListeners(row) {
+    row.querySelector('.product-select').addEventListener('change', function() { updatePrice(this); });
+    row.querySelector('.qty-input').addEventListener('change', function() { updateRowTotal(this); });
+    row.querySelector('.price-input').addEventListener('change', function() { updateRowTotal(this); });
+}
+
+function updatePrice(selectEl) {
+    const opt = selectEl.options[selectEl.selectedIndex];
+    const price = opt.getAttribute('data-price') || 0;
+    const row = selectEl.closest('tr');
+    row.querySelector('.price-input').value = parseFloat(price).toFixed(2);
+    updateRowTotal(row.querySelector('.qty-input'));
+}
+
+function updateRowTotal(input) {
+    const row = input.closest('tr');
+    const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+    row.querySelector('.row-total').value = (qty * price).toFixed(2);
+    updateGrandTotal();
+}
+
+function removeRow(btn) {
+    const rows = document.querySelectorAll('#itemsBody tr');
+    if (rows.length > 1) {
+        btn.closest('tr').remove();
+        updateGrandTotal();
+    }
+}
+
+function updateGrandTotal() {
+    let subtotal = 0;
+    document.querySelectorAll('.row-total').forEach(el => {
+        subtotal += parseFloat(el.value) || 0;
+    });
+    const tax = subtotal * 0.14;
+    const total = subtotal + tax;
+    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2);
+    document.getElementById('taxDisplay').textContent = tax.toFixed(2);
+    document.getElementById('totalDisplay').textContent = total.toFixed(2);
+}
+</script>
+{% endblock %}

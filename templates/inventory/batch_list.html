@@ -1,0 +1,95 @@
+{% extends "core/base.html" %}
+{% block title %}التشغيلات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">التشغيلات</h3>
+    <a href="{% url 'inventory:batch_create' %}" class="btn btn-primary">+ تشغيلة جديدة</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث بالتشغيلة / الصنف / الكود">
+            </div>
+            <div class="col-md-4">
+                <select name="product" class="form-select">
+                    <option value="">كل الأصناف</option>
+                    {% for p in products %}
+                        <option value="{{ p.id }}" {% if request.GET.product == p.id|stringformat:'s' %}selected{% endif %}>{{ p.product_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>معتمدة</option>
+                    <option value="held" {% if request.GET.status == 'held' %}selected{% endif %}>محجوزة</option>
+                    <option value="expired" {% if request.GET.status == 'expired' %}selected{% endif %}>منتهية</option>
+                    <option value="depleted" {% if request.GET.status == 'depleted' %}selected{% endif %}>نفدت</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>رقم التشغيلة</th>
+                    <th>الصنف</th>
+                    <th>المستلم</th>
+                    <th>المتاح</th>
+                    <th>الصلاحية</th>
+                    <th>التكلفة</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in batches %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.batch_number }}</td>
+                    <td>{{ item.product.product_name }}</td>
+                    <td>{{ item.quantity_received }}</td>
+                    <td>{{ item.quantity_available_total }}</td>
+                    <td>
+                        {{ item.expiry_date }}
+                        {% if item.is_near_expiry %}
+                            <span class="badge bg-warning text-dark">قرب انتهاء</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.unit_cost }}</td>
+                    <td>
+                        {% if item.status == 'approved' %}
+                            <span class="badge bg-success">معتمدة</span>
+                        {% elif item.status == 'held' %}
+                            <span class="badge bg-warning text-dark">محجوزة</span>
+                        {% elif item.status == 'expired' %}
+                            <span class="badge bg-danger">منتهية</span>
+                        {% elif item.status == 'depleted' %}
+                            <span class="badge bg-secondary">نفدت</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">مستلمة</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'inventory:batch_detail' item.pk %}" class="btn btn-sm btn-outline-info">عرض</a>
+                        <a href="{% url 'inventory:batch_update' item.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center py-4">لا توجد تشغيلات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

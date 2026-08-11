@@ -1,0 +1,86 @@
+{% extends "core/base.html" %}
+{% block title %}كارت المنتج{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">كارت المنتج</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'products:product_update' product.pk %}" class="btn btn-primary">تعديل</a>
+        <a href="{% url 'products:product_list' %}" class="btn btn-light">رجوع</a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-3">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" class="img-fluid rounded border">
+                {% else %}
+                    <div class="border rounded p-5 text-center text-muted">لا توجد صورة</div>
+                {% endif %}
+            </div>
+            <div class="col-md-9">
+                <div class="row g-3">
+                    <div class="col-md-4"><strong>الكود:</strong> {{ product.product_code }}</div>
+                    <div class="col-md-8"><strong>الاسم:</strong> {{ product.product_name }}</div>
+                    <div class="col-md-6"><strong>الاسم العلمي:</strong> {{ product.scientific_name|default:"-" }}</div>
+                    <div class="col-md-6"><strong>الباركود:</strong> {{ product.barcode|default:"-" }}</div>
+                    <div class="col-md-4"><strong>التصنيف:</strong> {{ product.category.category_name }}</div>
+                    <div class="col-md-4"><strong>الشكل:</strong> {{ product.form.form_name }}</div>
+                    <div class="col-md-4"><strong>الوحدة:</strong> {{ product.unit }}</div>
+                    <div class="col-md-4"><strong>عدد الوحدات بالعبوة:</strong> {{ product.units_per_pack }}</div>
+                    <div class="col-md-4"><strong>الضريبة:</strong> {{ product.tax_rate }}%</div>
+                    <div class="col-md-4"><strong>سعر البيع:</strong> {{ product.selling_price }}</div>
+                    <div class="col-md-4"><strong>الحد الأدنى للمخزون:</strong> {{ product.min_stock_level }}</div>
+                    <div class="col-md-4"><strong>المخزون الحالي:</strong> {{ product.current_stock }}</div>
+                    <div class="col-md-4">
+                        <strong>الحالة:</strong>
+                        {% if product.is_active %}
+                            <span class="badge bg-success">فعال</span>
+                        {% else %}
+                            <span class="badge bg-secondary">غير فعال</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-12"><strong>الوصف:</strong><br>{{ product.description|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-body">
+        <h5 class="mb-3">المخزون الحالي حسب التشغيلة</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>التشغيلة</th>
+                        <th>المخزن</th>
+                        <th>الصلاحية</th>
+                        <th>التكلفة</th>
+                        <th>متاح</th>
+                        <th>محجوز</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in inventory_rows %}
+                    <tr>
+                        <td>{{ row.batch.batch_number }}</td>
+                        <td>{{ row.warehouse.warehouse_name }}</td>
+                        <td>{{ row.batch.expiry_date }}</td>
+                        <td>{{ row.batch.unit_cost }}</td>
+                        <td>{{ row.quantity_available }}</td>
+                        <td>{{ row.quantity_reserved }}</td>
+                        <td>{{ row.batch.get_status_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-4">لا توجد أرصدة لهذا المنتج</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

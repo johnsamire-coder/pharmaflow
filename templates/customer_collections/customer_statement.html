@@ -1,0 +1,114 @@
+{% extends "core/base.html" %}
+{% block title %}كشف حساب{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">كشف حساب: {{ customer.pharmacy_name }}</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'collections:collection_create' %}?customer_id={{ customer.pk }}" class="btn btn-primary">+ سند قبض</a>
+        <button onclick="window.print()" class="btn btn-outline-dark">🖨️ طباعة</button>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6>المبيعات</h6>
+                <h5>{{ balance.total_invoiced|floatformat:2 }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6>التحصيل</h6>
+                <h5 class="text-success">{{ balance.total_paid|floatformat:2 }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6>المرتجعات</h6>
+                <h5>{{ balance.total_returns|floatformat:2 }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center {% if balance.credit_exceeded %}border-danger{% endif %}">
+            <div class="card-body">
+                <h6>الرصيد المستحق</h6>
+                <h4 class="{% if balance.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ balance.balance_due|floatformat:2 }}
+                </h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6>حد الائتمان المتاح</h6>
+                <h5>{{ balance.credit_available|floatformat:2 }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">الفواتير</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr><th>الفاتورة</th><th>التاريخ</th><th>الإجمالي</th><th>المستحق</th><th>الحالة</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for inv in invoices %}
+                            <tr>
+                                <td><a href="{% url 'sales:invoice_detail' inv.pk %}">{{ inv.invoice_number }}</a></td>
+                                <td>{{ inv.invoice_date }}</td>
+                                <td>{{ inv.total_amount|floatformat:2 }}</td>
+                                <td class="{% if inv.amount_due > 0 %}text-danger fw-bold{% endif %}">{{ inv.amount_due|floatformat:2 }}</td>
+                                <td>{{ inv.get_status_display }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center">لا توجد فواتير</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">التحصيلات</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr><th>السند</th><th>التاريخ</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for col in collections %}
+                            <tr>
+                                <td><a href="{% url 'collections:collection_detail' col.pk %}">{{ col.receipt_number }}</a></td>
+                                <td>{{ col.collection_date }}</td>
+                                <td class="text-success fw-bold">{{ col.amount|floatformat:2 }}</td>
+                                <td>{{ col.get_payment_method_display }}</td>
+                                <td>{{ col.get_status_display }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center">لا توجد تحصيلات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

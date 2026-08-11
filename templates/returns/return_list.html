@@ -1,0 +1,100 @@
+{% extends "core/base.html" %}
+{% block title %}المرتجعات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">المرتجعات</h3>
+    <a href="{% url 'returns:return_create' %}" class="btn btn-primary">+ مرتجع جديد</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث برقم المرتجع / العميل">
+            </div>
+            <div class="col-md-2">
+                <select name="customer" class="form-select">
+                    <option value="">كل العملاء</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}" {% if request.GET.customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.pharmacy_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="reason" class="form-select">
+                    <option value="">كل الأسباب</option>
+                    {% for key, label in reason_choices %}
+                        <option value="{{ key }}" {% if request.GET.reason == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    {% for key, label in status_choices %}
+                        <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>رقم المرتجع</th>
+                    <th>العميل</th>
+                    <th>التاريخ</th>
+                    <th>القيمة</th>
+                    <th>السبب</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in returns %}
+                <tr>
+                    <td>{{ item.return_number }}</td>
+                    <td>{{ item.customer.pharmacy_name }}</td>
+                    <td>{{ item.return_date }}</td>
+                    <td>{{ item.total_value|floatformat:2 }}</td>
+                    <td>{{ item.get_return_reason_display }}</td>
+                    <td>
+                        {% if item.status == 'pending' %}<span class="badge bg-warning text-dark">في الانتظار</span>
+                        {% elif item.status == 'approved' %}<span class="badge bg-info text-dark">معتمد</span>
+                        {% elif item.status == 'received' %}<span class="badge bg-success">مستلم</span>
+                        {% elif item.status == 'rejected' %}<span class="badge bg-danger">مرفوض</span>
+                        {% elif item.status == 'cancelled' %}<span class="badge bg-secondary">ملغي</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'returns:return_detail' item.pk %}" class="btn btn-sm btn-outline-info">عرض</a>
+                        {% if item.status == 'pending' %}
+                        <form method="post" action="{% url 'returns:return_approve' item.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-success">اعتماد</button>
+                        </form>
+                        <form method="post" action="{% url 'returns:return_reject' item.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-danger">رفض</button>
+                        </form>
+                        {% endif %}
+                        {% if item.status == 'approved' %}
+                        <a href="{% url 'returns:return_receive' item.pk %}" class="btn btn-sm btn-primary">استلام</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center py-4">لا توجد مرتجعات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

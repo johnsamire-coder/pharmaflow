@@ -1,0 +1,163 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-pills me-2"></i>{{ title }}</h2>
+    <a href="{% url 'products:list' %}" class="pf-btn pf-btn-secondary">
+        <i class="fas fa-arrow-right"></i> رجوع
+    </a>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row g-4">
+        <!-- البيانات الأساسية -->
+        <div class="col-md-8">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-info-circle me-2 text-primary"></i>البيانات الأساسية</h6>
+                </div>
+                <div class="pf-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">اسم المنتج <span class="required">*</span></label>
+                                {{ form.product_name }}
+                                {% if form.product_name.errors %}<div style="color:var(--pf-danger);font-size:12px;margin-top:4px;">{{ form.product_name.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">كود المنتج</label>
+                                {{ form.product_code }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الفئة</label>
+                                {{ form.category }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الوحدة</label>
+                                {{ form.unit }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الوصف</label>
+                                {{ form.description }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- التسعير -->
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-tag me-2 text-success"></i>التسعير</h6>
+                </div>
+                <div class="pf-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">سعر الشراء <span class="required">*</span></label>
+                                {{ form.purchase_price }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">سعر البيع <span class="required">*</span></label>
+                                {{ form.selling_price }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الحد الأدنى للمخزون</label>
+                                {{ form.min_stock_level }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الجانب الأيسر -->
+        <div class="col-md-4">
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-toggle-on me-2 text-warning"></i>الإعدادات</h6>
+                </div>
+                <div class="pf-card-body">
+                    {% if form.is_active %}
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8f9fc;border-radius:10px;margin-bottom:12px;">
+                        <label style="font-weight:600;font-size:13px;margin:0;">حالة المنتج</label>
+                        {{ form.is_active }}
+                    </div>
+                    {% endif %}
+                    {% if form.requires_prescription %}
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8f9fc;border-radius:10px;margin-bottom:12px;">
+                        <label style="font-weight:600;font-size:13px;margin:0;">يتطلب وصفة</label>
+                        {{ form.requires_prescription }}
+                    </div>
+                    {% endif %}
+                    {% if form.tax_rate %}
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">نسبة الضريبة %</label>
+                        {{ form.tax_rate }}
+                    </div>
+                    {% endif %}
+                    {% if form.bonus_percentage %}
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">نسبة البونص %</label>
+                        {{ form.bonus_percentage }}
+                    </div>
+                    {% endif %}
+                    {% if form.bonus_quantity %}
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">كمية البونص</label>
+                        {{ form.bonus_quantity }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- زر الحفظ -->
+            <div class="pf-card">
+                <div class="pf-card-body" style="text-align:center;">
+                    <button type="submit" class="pf-btn pf-btn-primary pf-btn-lg" style="width:100%;">
+                        <i class="fas fa-save"></i> حفظ المنتج
+                    </button>
+                    <a href="{% url 'products:list' %}" class="pf-btn pf-btn-secondary" style="width:100%;margin-top:8px;">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% block extra_css %}
+<style>
+select, input[type=text], input[type=number], input[type=email], textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #dee2e6;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-family: 'Cairo', sans-serif;
+    transition: all 0.25s;
+    background: white;
+}
+select:focus, input:focus, textarea:focus {
+    border-color: var(--pf-primary);
+    box-shadow: 0 0 0 3px rgba(67,97,238,0.12);
+    outline: none;
+}
+</style>
+{% endblock %}
+{% endblock %}

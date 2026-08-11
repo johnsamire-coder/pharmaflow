@@ -1,0 +1,25 @@
+{% extends "core/base.html" %}
+{% block title %}مورد{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{{ title }}</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">اسم المورد</label>{{ form.supplier_name }}</div>
+                <div class="col-md-6"><label class="form-label">اسم المسؤول</label>{{ form.contact_person }}</div>
+                <div class="col-md-6"><label class="form-label">التليفون</label>{{ form.phone }}</div>
+                <div class="col-md-6"><label class="form-label">الرقم الضريبي</label>{{ form.tax_number }}</div>
+                <div class="col-12"><label class="form-label">العنوان</label>{{ form.address }}</div>
+                <div class="col-12"><label class="form-label">ملاحظات</label>{{ form.notes }}</div>
+                <div class="col-12"><div class="form-check">{{ form.is_active }}<label class="form-check-label">فعال</label></div></div>
+            </div>
+            <div class="mt-4">
+                <button class="btn btn-primary">حفظ</button>
+                <a href="{% url 'manufacturing:supplier_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

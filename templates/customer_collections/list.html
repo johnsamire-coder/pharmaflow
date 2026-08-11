@@ -1,0 +1,166 @@
+{% extends 'core/base.html' %}
+{% block title %}التحصيلات{% endblock %}
+{% block page_title %}التحصيلات{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-hand-holding-usd me-2"></i>التحصيلات</h2>
+    <div class="pf-page-header-actions">
+        <a href="{% url 'customer_collections:create' %}" class="pf-btn pf-btn-primary">
+            <i class="fas fa-plus"></i> تحصيل جديد
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي التحصيلات</div>
+                <div class="pf-stat-value" style="font-size:20px;">{{ total_amount|floatformat:2|default:"0.00" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-receipt"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">عدد التحصيلات</div>
+                <div class="pf-stat-value">{{ collections.paginator.count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-money-check"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">شيكات معلقة</div>
+                <div class="pf-stat-value">{{ pending_cheques|default:"--" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="pf-filters mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+                   class="pf-form-control" placeholder="العميل أو رقم الإيصال...">
+        </div>
+        <div class="col-md-2">
+            <select name="payment_method" class="pf-form-select">
+                <option value="">كل الوسائل</option>
+                <option value="cash" {% if request.GET.payment_method == 'cash' %}selected{% endif %}>نقدي</option>
+                <option value="cheque" {% if request.GET.payment_method == 'cheque' %}selected{% endif %}>شيك</option>
+                <option value="transfer" {% if request.GET.payment_method == 'transfer' %}selected{% endif %}>تحويل</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}" class="pf-form-control">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}" class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="pf-btn pf-btn-primary me-2">
+                <i class="fas fa-search"></i> بحث
+            </button>
+            <a href="{% url 'customer_collections:list' %}" class="pf-btn pf-btn-secondary">
+                <i class="fas fa-redo"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-list me-2"></i>سجل التحصيلات</h6>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>رقم الإيصال</th>
+                    <th>العميل</th>
+                    <th>التاريخ</th>
+                    <th>المبلغ</th>
+                    <th>طريقة الدفع</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for col in collections %}
+                <tr>
+                    <td style="font-weight:700;color:var(--pf-primary);">{{ col.receipt_number|default:col.id }}</td>
+                    <td style="font-weight:600;">{{ col.customer.customer_name }}</td>
+                    <td style="color:#888;font-size:13px;">{{ col.collection_date|date:"Y/m/d" }}</td>
+                    <td style="font-weight:700;font-size:15px;color:var(--pf-success);">{{ col.amount|floatformat:2 }}</td>
+                    <td>
+                        {% if col.payment_method == 'cash' %}
+                        <span class="pf-badge pf-badge-success"><i class="fas fa-money-bill me-1"></i>نقدي</span>
+                        {% elif col.payment_method == 'cheque' %}
+                        <span class="pf-badge pf-badge-warning"><i class="fas fa-money-check me-1"></i>شيك</span>
+                        {% elif col.payment_method == 'transfer' %}
+                        <span class="pf-badge pf-badge-info"><i class="fas fa-exchange-alt me-1"></i>تحويل</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-secondary">{{ col.payment_method }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if col.status == 'cleared' %}
+                        <span class="pf-badge pf-badge-success">مُحصَّل</span>
+                        {% elif col.status == 'pending' %}
+                        <span class="pf-badge pf-badge-warning">معلق</span>
+                        {% elif col.status == 'bounced' %}
+                        <span class="pf-badge pf-badge-danger">مرتجع</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-secondary">{{ col.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'customer_collections:detail' col.pk %}" class="pf-btn-icon" title="تفاصيل">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="pf-empty">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            <h5>لا توجد تحصيلات</h5>
+                            <a href="{% url 'customer_collections:create' %}" class="pf-btn pf-btn-primary">
+                                <i class="fas fa-plus"></i> تحصيل جديد
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<div class="pf-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+    <span class="active">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+    <a href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

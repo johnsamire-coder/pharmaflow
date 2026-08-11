@@ -1,0 +1,93 @@
+{% extends "core/base.html" %}
+{% block title %}تفاصيل السند{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">سند قبض: {{ collection.receipt_number }}</h3>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if collection.status != 'bounced' and collection.status != 'cancelled' %}
+        <a href="{% url 'collections:collection_update' collection.pk %}" class="btn btn-primary">تعديل</a>
+        {% endif %}
+        {% if collection.status == 'pending' or collection.status == 'pending_clearance' %}
+        <form method="post" action="{% url 'collections:collection_confirm' collection.pk %}">
+            {% csrf_token %}
+            <button class="btn btn-success">تأكيد التحصيل</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'collections:collection_print' collection.pk %}" class="btn btn-outline-dark" target="_blank">🖨️ طباعة</a>
+        <a href="{% url 'collections:collection_list' %}" class="btn btn-light">رجوع</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>العميل:</strong> {{ collection.customer.pharmacy_name }}</div>
+                    <div class="col-md-6"><strong>التاريخ:</strong> {{ collection.collection_date }}</div>
+                    <div class="col-md-6"><strong>المبلغ:</strong> <span class="text-success fw-bold fs-5">{{ collection.amount|floatformat:2 }} جنيه</span></div>
+                    <div class="col-md-6"><strong>طريقة السداد:</strong> {{ collection.get_payment_method_display }}</div>
+
+                    {% if collection.reference_number %}
+                    <div class="col-md-6"><strong>رقم المرجع:</strong> {{ collection.reference_number }}</div>
+                    {% endif %}
+
+                    {% if collection.bank_name %}
+                    <div class="col-md-6"><strong>البنك:</strong> {{ collection.bank_name }}</div>
+                    {% endif %}
+
+                    {% if collection.cheque_number %}
+                    <div class="col-md-6"><strong>رقم الشيك:</strong> {{ collection.cheque_number }}</div>
+                    <div class="col-md-6"><strong>تاريخ الاستحقاق:</strong> {{ collection.cheque_due_date|default:"-" }}</div>
+                    {% endif %}
+
+                    {% if collection.due_date %}
+                    <div class="col-md-6"><strong>تاريخ الاستحقاق:</strong> {{ collection.due_date }}</div>
+                    {% endif %}
+
+                    <div class="col-md-6"><strong>بواسطة:</strong> {{ collection.collected_by.full_name|default:collection.collected_by.username }}</div>
+
+                    <div class="col-md-6">
+                        <strong>الحالة:</strong>
+                        {% if collection.status == 'confirmed' %}<span class="badge bg-success">مؤكد</span>
+                        {% elif collection.status == 'pending' %}<span class="badge bg-warning text-dark">معلق</span>
+                        {% elif collection.status == 'pending_clearance' %}<span class="badge bg-info text-dark">تحت التحصيل</span>
+                        {% elif collection.status == 'bounced' %}<span class="badge bg-danger">مرتجع</span>
+                        {% endif %}
+                    </div>
+
+                    {% if collection.notes %}
+                    <div class="col-12"><strong>ملاحظات:</strong> {{ collection.notes }}</div>
+                    {% endif %}
+
+                    {% if collection.attachment %}
+                    <div class="col-12">
+                        <strong>المرفق:</strong>
+                        <a href="{{ collection.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary">عرض المرفق</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">الفواتير المسددة</h5>
+                {% for link in collection.invoice_links.all %}
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <div class="fw-bold">{{ link.invoice.invoice_number }}</div>
+                        <small class="text-muted">{{ link.invoice.invoice_date }}</small>
+                    </div>
+                    <span class="text-success fw-bold">{{ link.amount_applied|floatformat:2 }}</span>
+                </div>
+                {% empty %}
+                <div class="text-muted">لم يتم ربط فواتير</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

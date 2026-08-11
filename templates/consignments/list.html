@@ -1,0 +1,171 @@
+{% extends 'core/base.html' %}
+{% block title %}تحت التصريف{% endblock %}
+{% block page_title %}أوامر التصريف{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-boxes-stacked me-2"></i>تحت التصريف</h2>
+    <div class="pf-page-header-actions">
+        <a href="{% url 'consignments:create' %}" class="pf-btn pf-btn-primary">
+            <i class="fas fa-plus"></i> أمر تصريف جديد
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-boxes-stacked"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي الأوامر</div>
+                <div class="pf-stat-value">{{ stats.total }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-info">
+            <div class="pf-stat-icon icon-info"><i class="fas fa-paper-plane"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">مرسلة</div>
+                <div class="pf-stat-value">{{ stats.sent }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-undo"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">مرتجع جزئي</div>
+                <div class="pf-stat-value">{{ stats.partial }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-check-circle"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">تمت التسوية</div>
+                <div class="pf-stat-value">{{ stats.settled }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="pf-filters mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <input type="text" name="search" value="{{ search }}"
+                   class="pf-form-control" placeholder="رقم الأمر أو العميل...">
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="pf-form-select">
+                <option value="">كل الحالات</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="date_from" value="{{ date_from }}" class="pf-form-control">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="date_to" value="{{ date_to }}" class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="pf-btn pf-btn-primary me-2">
+                <i class="fas fa-search"></i> بحث
+            </button>
+            <a href="{% url 'consignments:list' %}" class="pf-btn pf-btn-secondary">
+                <i class="fas fa-redo"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-list me-2"></i>أوامر التصريف</h6>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>رقم الأمر</th>
+                    <th>العميل</th>
+                    <th>تاريخ الإرسال</th>
+                    <th>تاريخ الاسترداد</th>
+                    <th>القيمة</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cs in consignments %}
+                <tr>
+                    <td>
+                        <a href="{% url 'consignments:detail' cs.pk %}"
+                           style="font-weight:700;color:var(--pf-primary);text-decoration:none;">
+                            {{ cs.consignment_number }}
+                        </a>
+                    </td>
+                    <td style="font-weight:600;">{{ cs.customer.customer_name }}</td>
+                    <td style="color:#888;font-size:13px;">{{ cs.sent_date|date:"Y/m/d" }}</td>
+                    <td style="color:#888;font-size:13px;">
+                        {{ cs.expected_return_date|date:"Y/m/d"|default:"-" }}
+                    </td>
+                    <td style="font-weight:700;">{{ cs.total_sent_value|floatformat:2 }}</td>
+                    <td>
+                        <span class="pf-badge pf-badge-{% if cs.status == 'settled' %}success{% elif cs.status == 'sent' %}info{% elif cs.status == 'partial_returned' %}warning{% elif cs.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
+                            {{ cs.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{% url 'consignments:detail' cs.pk %}" class="pf-btn-icon" title="تفاصيل">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'consignments:print' cs.pk %}" class="pf-btn-icon" title="طباعة" target="_blank">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="pf-empty">
+                            <i class="fas fa-boxes-stacked"></i>
+                            <h5>لا توجد أوامر تصريف</h5>
+                            <a href="{% url 'consignments:create' %}" class="pf-btn pf-btn-primary">
+                                <i class="fas fa-plus"></i> أمر جديد
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<div class="pf-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+    <span class="active">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+    <a href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

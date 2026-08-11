@@ -1,0 +1,97 @@
+{% extends "core/base.html" %}
+{% block title %}رصيد المخزون{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">رصيد المخزون الحالي</h3>
+    <div class="text-muted">إجمالي الكمية المتاحة: <strong>{{ total_qty }}</strong></div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث بالصنف / الكود / التشغيلة">
+            </div>
+            <div class="col-md-2">
+                <select name="warehouse" class="form-select">
+                    <option value="">كل المخازن</option>
+                    {% for w in warehouses %}
+                        <option value="{{ w.id }}" {% if request.GET.warehouse == w.id|stringformat:'s' %}selected{% endif %}>{{ w.warehouse_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="product" class="form-select">
+                    <option value="">كل الأصناف</option>
+                    {% for p in products %}
+                        <option value="{{ p.id }}" {% if request.GET.product == p.id|stringformat:'s' %}selected{% endif %}>{{ p.product_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="stock_status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    <option value="low" {% if request.GET.stock_status == 'low' %}selected{% endif %}>منخفض</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>الصنف</th>
+                    <th>التشغيلة</th>
+                    <th>المخزن</th>
+                    <th>الصلاحية</th>
+                    <th>التكلفة</th>
+                    <th>متاح</th>
+                    <th>محجوز</th>
+                    <th>تحت التصريف</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in inventory_rows %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.product.product_name }}</td>
+                    <td>{{ row.batch.batch_number }}</td>
+                    <td>{{ row.warehouse.warehouse_name }}</td>
+                    <td>{{ row.batch.expiry_date }}</td>
+                    <td>{{ row.batch.unit_cost }}</td>
+                    <td>
+                        {{ row.quantity_available }}
+                        {% if row.quantity_available <= row.product.min_stock_level %}
+                            <span class="badge bg-warning text-dark">منخفض</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.quantity_reserved }}</td>
+                    <td>{{ row.quantity_on_consignment }}</td>
+                    <td>
+                        {% if row.batch.status == 'approved' %}
+                            <span class="badge bg-success">متاح</span>
+                        {% elif row.batch.status == 'held' %}
+                            <span class="badge bg-warning text-dark">محجوز</span>
+                        {% elif row.batch.status == 'expired' %}
+                            <span class="badge bg-danger">منتهي</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ row.batch.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="text-center py-4">لا توجد أرصدة</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

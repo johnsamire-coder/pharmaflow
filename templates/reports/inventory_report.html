@@ -1,0 +1,101 @@
+{% extends "core/base.html" %}
+{% block title %}تقرير المخزون{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">تقرير المخزون</h3>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm no-print">🖨️ طباعة</button>
+</div>
+
+<div class="card shadow-sm mb-3 no-print">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label small">الصنف</label>
+                <select name="product" class="form-select form-select-sm">
+                    <option value="">كل الأصناف</option>
+                    {% for p in products %}
+                        <option value="{{ p.id }}" {% if selected_product == p.id|stringformat:'s' %}selected{% endif %}>{{ p.product_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">المخزن</label>
+                <select name="warehouse" class="form-select form-select-sm">
+                    <option value="">كل المخازن</option>
+                    {% for w in warehouses %}
+                        <option value="{{ w.id }}" {% if selected_warehouse == w.id|stringformat:'s' %}selected{% endif %}>{{ w.warehouse_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">فلتر المخزون</label>
+                <select name="stock_filter" class="form-select form-select-sm">
+                    <option value="">كل الأرصدة</option>
+                    <option value="low" {% if selected_stock_filter == 'low' %}selected{% endif %}>مخزون منخفض</option>
+                    <option value="near_expiry" {% if selected_stock_filter == 'near_expiry' %}selected{% endif %}>قرب انتهاء الصلاحية</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-primary btn-sm w-100">عرض</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center bg-info text-white">
+            <div class="card-body">
+                <div class="small">إجمالي الكمية المتاحة</div>
+                <div class="fs-5 fw-bold">{{ total_available }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>الصنف</th>
+                        <th>الكود</th>
+                        <th>التشغيلة</th>
+                        <th>المخزن</th>
+                        <th>الصلاحية</th>
+                        <th>التكلفة</th>
+                        <th>متاح</th>
+                        <th>محجوز</th>
+                        <th>حالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr {% if row.quantity_available <= row.product.min_stock_level %}class="table-warning"{% endif %}>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ row.product.product_name }}</td>
+                        <td>{{ row.product.product_code }}</td>
+                        <td>{{ row.batch.batch_number }}</td>
+                        <td>{{ row.warehouse.warehouse_name }}</td>
+                        <td>
+                            {{ row.batch.expiry_date }}
+                            {% if row.batch.is_near_expiry %}
+                                <span class="badge bg-warning text-dark">قرب انتهاء</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.batch.unit_cost }}</td>
+                        <td class="fw-bold">{{ row.quantity_available }}</td>
+                        <td>{{ row.quantity_reserved }}</td>
+                        <td>{{ row.batch.get_status_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="10" class="text-center py-4">لا توجد بيانات</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

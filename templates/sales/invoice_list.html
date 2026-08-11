@@ -1,0 +1,80 @@
+{% extends "core/base.html" %}
+{% block title %}الفواتير{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">الفواتير</h3>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث برقم الفاتورة / اسم العميل">
+            </div>
+            <div class="col-md-3">
+                <select name="customer" class="form-select">
+                    <option value="">كل العملاء</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}" {% if request.GET.customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.pharmacy_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    {% for key, label in status_choices %}
+                        <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>رقم الفاتورة</th>
+                    <th>العميل</th>
+                    <th>التاريخ</th>
+                    <th>الإجمالي</th>
+                    <th>المدفوع</th>
+                    <th>المستحق</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td>{{ inv.invoice_number }}</td>
+                    <td>{{ inv.customer.pharmacy_name }}</td>
+                    <td>{{ inv.invoice_date }}</td>
+                    <td>{{ inv.total_amount|floatformat:2 }}</td>
+                    <td>{{ inv.amount_paid|floatformat:2 }}</td>
+                    <td class="{% if inv.amount_due > 0 %}text-danger fw-bold{% endif %}">{{ inv.amount_due|floatformat:2 }}</td>
+                    <td>
+                        {% if inv.status == 'issued' %}<span class="badge bg-warning text-dark">صادرة</span>
+                        {% elif inv.status == 'partially_paid' %}<span class="badge bg-info text-dark">جزئي</span>
+                        {% elif inv.status == 'paid' %}<span class="badge bg-success">مدفوعة</span>
+                        {% elif inv.status == 'cancelled' %}<span class="badge bg-danger">ملغاة</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-flex gap-2">
+                        <a href="{% url 'sales:invoice_detail' inv.pk %}" class="btn btn-sm btn-outline-info">عرض</a>
+                        <a href="{% url 'sales:invoice_print' inv.pk %}" class="btn btn-sm btn-outline-dark" target="_blank">طباعة</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center py-4">لا توجد فواتير</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "core/base.html" %}
+{% block title %}أوامر البيع{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">أوامر البيع</h3>
+    <a href="{% url 'sales:order_create' %}" class="btn btn-primary">+ أوردر جديد</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث برقم الأوردر / اسم العميل">
+            </div>
+            <div class="col-md-3">
+                <select name="customer" class="form-select">
+                    <option value="">كل العملاء</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}" {% if request.GET.customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.pharmacy_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    {% for key, label in status_choices %}
+                        <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>رقم الأوردر</th>
+                    <th>العميل</th>
+                    <th>المندوب</th>
+                    <th>التاريخ</th>
+                    <th>الإجمالي</th>
+                    <th>نوع البيع</th>
+                    <th>طريقة السداد</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_number }}</td>
+                    <td>{{ order.customer.pharmacy_name }}</td>
+                    <td>{{ order.rep.full_name|default:order.rep.username }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.total_amount|floatformat:2 }}</td>
+                    <td>{{ order.get_order_type_display }}</td>
+                    <td>{{ order.get_payment_method_display }}</td>
+                    <td>
+                        {% if order.status == 'draft' %}<span class="badge bg-secondary">مسودة</span>
+                        {% elif order.status == 'pending_approval' %}<span class="badge bg-warning text-dark">معلق</span>
+                        {% elif order.status == 'approved' %}<span class="badge bg-info text-dark">معتمد</span>
+                        {% elif order.status == 'delivered' %}<span class="badge bg-success">مسلم</span>
+                        {% elif order.status == 'cancelled' %}<span class="badge bg-danger">ملغي</span>
+                        {% else %}<span class="badge bg-primary">{{ order.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'sales:order_detail' order.pk %}" class="btn btn-sm btn-outline-info">عرض</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center py-4">لا توجد أوامر بيع</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

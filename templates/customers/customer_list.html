@@ -1,0 +1,89 @@
+{% extends "core/base.html" %}
+{% block title %}العملاء{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">العملاء / الصيدليات</h3>
+    <a href="{% url 'customers:customer_create' %}" class="btn btn-primary">+ عميل جديد</a>
+</div>
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث بالاسم / الكود / التليفون">
+            </div>
+            <div class="col-md-2">
+                <select name="area" class="form-select">
+                    <option value="">كل المناطق</option>
+                    {% for a in areas %}
+                        <option value="{{ a.id }}" {% if request.GET.area == a.id|stringformat:'s' %}selected{% endif %}>{{ a.area_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="rep" class="form-select">
+                    <option value="">كل المندوبين</option>
+                    {% for r in reps %}
+                        <option value="{{ r.id }}" {% if request.GET.rep == r.id|stringformat:'s' %}selected{% endif %}>{{ r.full_name|default:r.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="payment_type" class="form-select">
+                    <option value="">كل أنواع التعامل</option>
+                    <option value="cash" {% if request.GET.payment_type == 'cash' %}selected{% endif %}>نقدي</option>
+                    <option value="credit" {% if request.GET.payment_type == 'credit' %}selected{% endif %}>آجل</option>
+                    <option value="consignment" {% if request.GET.payment_type == 'consignment' %}selected{% endif %}>تصريف</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">كل الحالات</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>فعال</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير فعال</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th><th>الكود</th><th>الصيدلية</th><th>المسؤول</th>
+                    <th>التليفون</th><th>المنطقة</th><th>المندوب</th>
+                    <th>نوع التعامل</th><th>الحالة</th><th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in customers %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.customer_code }}</td>
+                    <td>{{ item.pharmacy_name }}</td>
+                    <td>{{ item.contact_person|default:"-" }}</td>
+                    <td>{{ item.phone|default:"-" }}</td>
+                    <td>{{ item.area.area_name|default:"-" }}</td>
+                    <td>{{ item.rep.full_name|default:item.rep.username|default:"-" }}</td>
+                    <td>{{ item.get_payment_type_display }}</td>
+                    <td>{% if item.is_active %}<span class="badge bg-success">فعال</span>{% else %}<span class="badge bg-secondary">غير فعال</span>{% endif %}</td>
+                    <td class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'customers:customer_detail' item.pk %}" class="btn btn-sm btn-outline-info">عرض</a>
+                        <a href="{% url 'customers:customer_update' item.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a>
+                        <form method="post" action="{% url 'customers:customer_toggle_status' item.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-warning">{% if item.is_active %}تعطيل{% else %}تفعيل{% endif %}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="text-center py-4">لا توجد بيانات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

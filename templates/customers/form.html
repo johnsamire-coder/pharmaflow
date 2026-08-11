@@ -1,0 +1,137 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-user-tie me-2"></i>{{ title }}</h2>
+    <a href="{% url 'customers:list' %}" class="pf-btn pf-btn-secondary">
+        <i class="fas fa-arrow-right"></i> رجوع
+    </a>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="row g-4">
+        <div class="col-md-8">
+            <!-- البيانات الأساسية -->
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-id-card me-2 text-primary"></i>البيانات الأساسية</h6>
+                </div>
+                <div class="pf-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">اسم العميل <span class="required">*</span></label>
+                                {{ form.customer_name }}
+                                {% if form.customer_name.errors %}
+                                <div style="color:var(--pf-danger);font-size:12px;">{{ form.customer_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">كود العميل</label>
+                                {{ form.customer_code }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الهاتف</label>
+                                {{ form.phone }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">هاتف 2</label>
+                                {{ form.phone2 }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">المنطقة</label>
+                                {{ form.area }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الرقم الضريبي</label>
+                                {{ form.tax_number }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">العنوان</label>
+                                {{ form.address }}
+                            </div>
+                        </div>
+                        {% if form.notes %}
+                        <div class="col-12">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">ملاحظات</label>
+                                {{ form.notes }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- الائتمان -->
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-credit-card me-2 text-warning"></i>الائتمان</h6>
+                </div>
+                <div class="pf-card-body">
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">حد الائتمان</label>
+                        {{ form.credit_limit }}
+                    </div>
+                    {% if form.payment_terms %}
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">شروط الدفع (أيام)</label>
+                        {{ form.payment_terms }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- الإعدادات -->
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-cog me-2"></i>الإعدادات</h6>
+                </div>
+                <div class="pf-card-body">
+                    {% if form.is_active %}
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8f9fc;border-radius:10px;margin-bottom:8px;">
+                        <label style="font-weight:600;font-size:13px;margin:0;cursor:pointer;">مفعّل</label>
+                        {{ form.is_active }}
+                    </div>
+                    {% endif %}
+                    {% if form.sales_rep %}
+                    <div class="pf-form-group">
+                        <label class="pf-form-label">المندوب المسؤول</label>
+                        {{ form.sales_rep }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- حفظ -->
+            <div class="pf-card">
+                <div class="pf-card-body">
+                    <button type="submit" class="pf-btn pf-btn-primary pf-btn-lg" style="width:100%;">
+                        <i class="fas fa-save"></i> حفظ العميل
+                    </button>
+                    <a href="{% url 'customers:list' %}" class="pf-btn pf-btn-secondary" style="width:100%;margin-top:8px;">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

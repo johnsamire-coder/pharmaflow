@@ -1,0 +1,69 @@
+{% extends "core/base.html" %}
+{% block title %}تفاصيل الفاتورة{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">فاتورة رقم: {{ invoice.invoice_number }}</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'sales:invoice_print' invoice.pk %}" class="btn btn-outline-dark" target="_blank">🖨️ طباعة</a>
+        <a href="{% url 'sales:invoice_list' %}" class="btn btn-light">رجوع</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>العميل:</strong> {{ invoice.customer.pharmacy_name }}</div>
+                    <div class="col-md-6"><strong>المندوب:</strong> {{ invoice.rep.full_name|default:invoice.rep.username }}</div>
+                    <div class="col-md-4"><strong>التاريخ:</strong> {{ invoice.invoice_date }}</div>
+                    <div class="col-md-4"><strong>تاريخ الاستحقاق:</strong> {{ invoice.due_date|default:"-" }}</div>
+                    <div class="col-md-4"><strong>الحالة:</strong> {{ invoice.get_status_display }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><td>الإجمالي:</td><td class="text-end">{{ invoice.subtotal|floatformat:2 }}</td></tr>
+                    <tr><td>الضريبة 14%:</td><td class="text-end">{{ invoice.tax_amount|floatformat:2 }}</td></tr>
+                    <tr class="table-primary fw-bold"><td>الصافي:</td><td class="text-end">{{ invoice.total_amount|floatformat:2 }}</td></tr>
+                    <tr><td>المدفوع:</td><td class="text-end text-success">{{ invoice.amount_paid|floatformat:2 }}</td></tr>
+                    <tr class="{% if invoice.amount_due > 0 %}table-danger{% endif %} fw-bold">
+                        <td>المستحق:</td><td class="text-end">{{ invoice.amount_due|floatformat:2 }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-3">
+    <div class="card-body">
+        <h5 class="mb-3">الأصناف</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>#</th><th>الصنف</th><th>التشغيلة</th><th>الصلاحية</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th><th>نوع</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items.all %}
+                    <tr {% if item.is_bonus %}class="table-warning"{% endif %}>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.batch.batch_number }}</td>
+                        <td>{{ item.batch.expiry_date }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{% if item.is_bonus %}-{% else %}{{ item.unit_price|floatformat:2 }}{% endif %}</td>
+                        <td>{% if item.is_bonus %}0{% else %}{{ item.line_total|floatformat:2 }}{% endif %}</td>
+                        <td>{% if item.is_bonus %}<span class="badge bg-warning text-dark">بونص</span>{% else %}<span class="badge bg-success">بيع</span>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

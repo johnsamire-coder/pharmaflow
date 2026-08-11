@@ -1,0 +1,33 @@
+{% extends "core/base.html" %}
+{% block title %}العميل{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{% if object %}تعديل عميل{% else %}عميل جديد{% endif %}</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-3"><label class="form-label">كود العميل</label>{{ form.customer_code }}</div>
+                <div class="col-md-9"><label class="form-label">اسم الصيدلية</label>{{ form.pharmacy_name }}</div>
+                <div class="col-md-6"><label class="form-label">اسم المسؤول</label>{{ form.contact_person }}</div>
+                <div class="col-md-3"><label class="form-label">التليفون</label>{{ form.phone }}</div>
+                <div class="col-md-3"><label class="form-label">واتساب</label>{{ form.whatsapp }}</div>
+                <div class="col-12"><label class="form-label">العنوان</label>{{ form.address }}</div>
+                <div class="col-md-4"><label class="form-label">المنطقة</label>{{ form.area }}</div>
+                <div class="col-md-4"><label class="form-label">خط السير</label>{{ form.route }}</div>
+                <div class="col-md-4"><label class="form-label">المندوب المسؤول</label>{{ form.rep }}</div>
+                <div class="col-md-6"><label class="form-label">الرقم الضريبي</label>{{ form.tax_number }}</div>
+                <div class="col-md-6"><label class="form-label">نوع التعامل</label>{{ form.payment_type }}</div>
+                <div class="col-md-6"><label class="form-label">حد الائتمان</label>{{ form.credit_limit }}</div>
+                <div class="col-md-6"><label class="form-label">أيام السداد</label>{{ form.payment_days }}</div>
+                <div class="col-12"><label class="form-label">ملاحظات</label>{{ form.notes }}</div>
+                <div class="col-12"><div class="form-check">{{ form.is_active }}<label class="form-check-label">فعال</label></div></div>
+            </div>
+            <div class="mt-4">
+                <button class="btn btn-primary">حفظ</button>
+                <a href="{% url 'customers:customer_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

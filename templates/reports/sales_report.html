@@ -1,0 +1,158 @@
+{% extends "core/base.html" %}
+{% block title %}تقرير المبيعات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">تقرير المبيعات</h3>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm no-print">🖨️ طباعة</button>
+</div>
+
+<div class="card shadow-sm mb-3 no-print">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label small">من تاريخ</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">إلى تاريخ</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">العميل</label>
+                <select name="customer" class="form-select form-select-sm">
+                    <option value="">كل العملاء</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.pharmacy_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">المندوب</label>
+                <select name="rep" class="form-select form-select-sm">
+                    <option value="">كل المندوبين</option>
+                    {% for r in reps %}
+                        <option value="{{ r.id }}" {% if selected_rep == r.id|stringformat:'s' %}selected{% endif %}>{{ r.full_name|default:r.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary btn-sm w-100">عرض</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center bg-primary text-white">
+            <div class="card-body">
+                <div class="small">إجمالي المبيعات</div>
+                <div class="fs-5 fw-bold">{{ totals.total_sales|floatformat:2|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center bg-success text-white">
+            <div class="card-body">
+                <div class="small">إجمالي المحصل</div>
+                <div class="fs-5 fw-bold">{{ totals.total_paid|floatformat:2|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center bg-danger text-white">
+            <div class="card-body">
+                <div class="small">إجمالي المستحق</div>
+                <div class="fs-5 fw-bold">{{ totals.total_due|floatformat:2|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center bg-info text-white">
+            <div class="card-body">
+                <div class="small">عدد الفواتير</div>
+                <div class="fs-5 fw-bold">{{ totals.count|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">المبيعات حسب العميل (أعلى 20)</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>العميل</th><th>الإجمالي</th><th>المستحق</th><th>فواتير</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for row in by_customer %}
+                            <tr>
+                                <td>{{ row.customer__pharmacy_name }}</td>
+                                <td>{{ row.total|floatformat:2 }}</td>
+                                <td class="{% if row.due > 0 %}text-danger{% endif %}">{{ row.due|floatformat:2 }}</td>
+                                <td>{{ row.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">المبيعات حسب الصنف (أعلى 20)</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>الصنف</th><th>الكمية</th><th>القيمة</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for row in by_product %}
+                            <tr>
+                                <td>{{ row.product__product_name }}</td>
+                                <td>{{ row.total_qty }}</td>
+                                <td>{{ row.total_value|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="mb-3">تفاصيل الفواتير</h5>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr><th>الفاتورة</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th><th>المستحق</th><th>الحالة</th></tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                    <tr>
+                        <td><a href="/sales/invoices/{{ inv.pk }}/">{{ inv.invoice_number }}</a></td>
+                        <td>{{ inv.invoice_date }}</td>
+                        <td>{{ inv.customer.pharmacy_name }}</td>
+                        <td>{{ inv.rep.full_name|default:inv.rep.username }}</td>
+                        <td>{{ inv.total_amount|floatformat:2 }}</td>
+                        <td class="{% if inv.amount_due > 0 %}text-danger{% endif %}">{{ inv.amount_due|floatformat:2 }}</td>
+                        <td>{{ inv.get_status_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-3">لا توجد بيانات</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

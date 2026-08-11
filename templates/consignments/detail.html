@@ -1,0 +1,253 @@
+{% extends 'core/base.html' %}
+{% block title %}أمر التصريف {{ consignment.consignment_number }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>
+            <i class="fas fa-boxes me-2 text-primary"></i>
+            أمر التصريف: {{ consignment.consignment_number }}
+        </h2>
+        <span class="badge bg-{{ consignment.get_status_badge }} fs-6">
+            {{ consignment.get_status_display }}
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'consignments:print' consignment.pk %}"
+           class="btn btn-outline-secondary" target="_blank">
+            <i class="fas fa-print me-1"></i>طباعة
+        </a>
+        {% if can_send %}
+        <form method="post" action="{% url 'consignments:send' consignment.pk %}"
+              onsubmit="return confirm('تأكيد إرسال أمر التصريف؟')">
+            {% csrf_token %}
+            <button class="btn btn-primary">
+                <i class="fas fa-paper-plane me-1"></i>إرسال
+            </button>
+        </form>
+        {% endif %}
+        {% if can_return %}
+        <a href="{% url 'consignments:return' consignment.pk %}"
+           class="btn btn-warning text-dark">
+            <i class="fas fa-undo me-1"></i>تسجيل مرتجع
+        </a>
+        {% endif %}
+        {% if can_settle %}
+        <a href="{% url 'consignments:settle' consignment.pk %}"
+           class="btn btn-success">
+            <i class="fas fa-check-circle me-1"></i>تسوية
+        </a>
+        {% endif %}
+        {% if can_cancel %}
+        <form method="post" action="{% url 'consignments:cancel' consignment.pk %}"
+              onsubmit="return confirm('هل تريد إلغاء هذا الأمر؟')">
+            {% csrf_token %}
+            <button class="btn btn-outline-danger">
+                <i class="fas fa-ban me-1"></i>إلغاء
+            </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'consignments:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i>رجوع
+        </a>
+    </div>
+</div>
+
+<!-- بيانات الأمر -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="fas fa-info-circle me-2"></i>بيانات الأمر
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <td class="text-muted fw-bold" width="40%">العميل</td>
+                        <td>{{ consignment.customer.customer_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">تاريخ الإرسال</td>
+                        <td>{{ consignment.sent_date|date:"Y/m/d" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">تاريخ الاسترداد</td>
+                        <td>
+                            {% if consignment.expected_return_date %}
+                                {{ consignment.expected_return_date|date:"Y/m/d" }}
+                            {% else %}
+                                <span class="text-muted">غير محدد</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-bold">أُرسل بواسطة</td>
+                        <td>
+                            {% if consignment.sent_by %}
+                                {{ consignment.sent_by.get_full_name|default:consignment.sent_by.username }}
+                            {% else %}-{% endif %}
+                        </td>
+                    </tr>
+                    {% if consignment.settled_date %}
+                    <tr>
+                        <td class="text-muted fw-bold">تاريخ التسوية</td>
+                        <td>{{ consignment.settled_date|date:"Y/m/d" }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if consignment.notes %}
+                    <tr>
+                        <td class="text-muted fw-bold">ملاحظات</td>
+                        <td>{{ consignment.notes }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-light fw-bold">
+                <i class="fas fa-chart-pie me-2"></i>ملخص مالي
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-primary text-white rounded">
+                            <div class="small mb-1">إجمالي المرسل</div>
+                            <div class="fw-bold fs-5">
+                                {{ consignment.total_sent_value|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-success text-white rounded">
+                            <div class="small mb-1">إجمالي المباع</div>
+                            <div class="fw-bold fs-5">
+                                {{ consignment.total_sold_value|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-warning text-dark rounded">
+                            <div class="small mb-1">إجمالي المرتجع</div>
+                            <div class="fw-bold fs-5">
+                                {{ consignment.total_returned_value|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-secondary text-white rounded">
+                            <div class="small mb-1">الكمية المباعة</div>
+                            <div class="fw-bold fs-5">
+                                {{ consignment.total_sold_quantity }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- البنود -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-dark text-white">
+        <i class="fas fa-list me-2"></i>بنود التصريف
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>المنتج</th>
+                        <th>الدفعة</th>
+                        <th class="text-center">المرسل</th>
+                        <th class="text-center">المرتجع</th>
+                        <th class="text-center">المباع</th>
+                        <th class="text-center">المتبقي</th>
+                        <th>سعر الوحدة</th>
+                        <th>قيمة المرسل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="fw-bold">{{ item.product.product_name }}</td>
+                        <td>
+                            {% if item.batch %}
+                                <small class="text-muted">{{ item.batch.batch_number }}</small>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="text-center">{{ item.quantity_sent }}</td>
+                        <td class="text-center text-warning">{{ item.quantity_returned }}</td>
+                        <td class="text-center text-success">{{ item.quantity_sold }}</td>
+                        <td class="text-center">
+                            <span class="badge {% if item.quantity_remaining == 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ item.quantity_remaining }}
+                            </span>
+                        </td>
+                        <td>{{ item.unit_price|floatformat:2 }}</td>
+                        <td class="fw-bold">{{ item.line_total_sent|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-primary">
+                    <tr>
+                        <td colspan="8" class="fw-bold text-end">الإجمالي:</td>
+                        <td class="fw-bold">{{ consignment.total_sent_value|floatformat:2 }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- المرتجعات المسجلة -->
+{% if returns %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-warning text-dark">
+        <i class="fas fa-undo me-2"></i>سجل المرتجعات
+    </div>
+    <div class="card-body">
+        {% for ret in returns %}
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between mb-2">
+                <strong>مرتجع بتاريخ: {{ ret.return_date|date:"Y/m/d" }}</strong>
+                <small class="text-muted">
+                    استُلم بواسطة:
+                    {% if ret.received_by %}
+                        {{ ret.received_by.get_full_name|default:ret.received_by.username }}
+                    {% else %}-{% endif %}
+                </small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th>الكمية المرتجعة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ri in ret.items.all %}
+                        <tr>
+                            <td>{{ ri.consignment_item.product.product_name }}</td>
+                            <td>{{ ri.quantity_returned }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if ret.notes %}
+            <small class="text-muted">ملاحظات: {{ ret.notes }}</small>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

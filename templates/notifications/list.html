@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% block title %}الإشعارات{% endblock %}
+{% block page_title %}الإشعارات{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-bell me-2"></i>الإشعارات</h2>
+    <div class="pf-page-header-actions">
+        {% if unread_count %}
+        <form method="post" action="{% url 'notifications:mark_all_read' %}">
+            {% csrf_token %}
+            <button type="submit" class="pf-btn pf-btn-outline">
+                <i class="fas fa-check-double"></i> تعليم الكل كمقروء
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if unread_count %}
+<div class="pf-alert pf-alert-info" style="margin-bottom:20px;">
+    <i class="fas fa-bell"></i>
+    <span>لديك <strong>{{ unread_count }}</strong> إشعار غير مقروء</span>
+</div>
+{% endif %}
+
+<div class="pf-card">
+    <div class="pf-card-body p-0">
+        {% for notif in notifications %}
+        <div class="d-flex align-items-start gap-3 p-4"
+             style="border-bottom:1px solid #f3f4f7;background:{% if not notif.is_read %}#fafbff{% else %}white{% endif %};transition:background 0.3s;">
+            <div class="pf-stat-icon icon-{% if notif.notification_type == 'warning' %}warning{% elif notif.notification_type == 'error' %}danger{% elif notif.notification_type == 'success' %}success{% else %}info{% endif %}"
+                 style="width:44px;height:44px;border-radius:12px;font-size:18px;flex-shrink:0;">
+                <i class="fas {% if notif.notification_type == 'warning' %}fa-exclamation-triangle{% elif notif.notification_type == 'error' %}fa-exclamation-circle{% elif notif.notification_type == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %}"></i>
+            </div>
+            <div style="flex:1;">
+                <div style="font-weight:{% if not notif.is_read %}700{% else %}500{% endif %};color:#333;font-size:14px;margin-bottom:4px;">
+                    {{ notif.title }}
+                    {% if not notif.is_read %}
+                    <span class="pf-badge pf-badge-primary" style="font-size:10px;margin-right:8px;">جديد</span>
+                    {% endif %}
+                </div>
+                <div style="color:#666;font-size:13px;margin-bottom:6px;">{{ notif.message }}</div>
+                <div style="color:#aaa;font-size:11px;">
+                    <i class="fas fa-clock me-1"></i>{{ notif.created_at|timesince }} مضت
+                </div>
+            </div>
+            {% if not notif.is_read %}
+            <form method="post" action="{% url 'notifications:mark_read' notif.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="pf-btn-icon" title="تعليم كمقروء">
+                    <i class="fas fa-check"></i>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="pf-empty">
+            <i class="fas fa-bell-slash"></i>
+            <h5>لا توجد إشعارات</h5>
+            <p>ستظهر هنا الإشعارات الجديدة</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if is_paginated %}
+<div class="pf-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+    <span class="active">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+    <a href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

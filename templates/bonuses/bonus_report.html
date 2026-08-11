@@ -1,0 +1,124 @@
+{% extends "core/base.html" %}
+{% block title %}تقرير البونص{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">تقرير البونص</h3>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm no-print">🖨️ طباعة</button>
+</div>
+
+<div class="card shadow-sm mb-3 no-print">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label small">من تاريخ</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">إلى تاريخ</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">العميل</label>
+                <select name="customer" class="form-select form-select-sm">
+                    <option value="">كل العملاء</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.pharmacy_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">الصنف</label>
+                <select name="product" class="form-select form-select-sm">
+                    <option value="">كل الأصناف</option>
+                    {% for p in products %}
+                        <option value="{{ p.id }}" {% if selected_product == p.id|stringformat:'s' %}selected{% endif %}>{{ p.product_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button class="btn btn-primary btn-sm w-100">عرض</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">حسب الصنف</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>الصنف</th><th>كمية البونص</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for row in by_product %}
+                            <tr>
+                                <td>{{ row.product__product_name }}</td>
+                                <td>{{ row.total_bonus_qty }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center">لا توجد بيانات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">حسب العميل</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>العميل</th><th>كمية البونص</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for row in by_customer %}
+                            <tr>
+                                <td>{{ row.sales_order__customer__pharmacy_name }}</td>
+                                <td>{{ row.total_bonus_qty }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center">لا توجد بيانات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="mb-3">تفاصيل البونص المصروف</h5>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr><th>التاريخ</th><th>الأوردر</th><th>العميل</th><th>الصنف</th><th>الكمية</th><th>البونص</th><th>المصدر</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.sales_order.order_date }}</td>
+                        <td>{{ item.sales_order.order_number }}</td>
+                        <td>{{ item.sales_order.customer.pharmacy_name }}</td>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.bonus_quantity }}</td>
+                        <td>{{ item.get_bonus_source_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-4">لا توجد بيانات</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

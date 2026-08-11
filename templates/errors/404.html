@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - الصفحة غير موجودة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0f2f8 0%, #e8ecff 100%);
+            margin: 0;
+        }
+        .error-box {
+            text-align: center;
+            padding: 48px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 480px;
+            width: 90%;
+        }
+        .error-code {
+            font-size: 96px;
+            font-weight: 900;
+            color: #4361ee;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .error-title { font-size: 24px; font-weight: 700; color: #333; margin-bottom: 12px; }
+        .error-msg { color: #888; font-size: 14px; margin-bottom: 32px; }
+        .error-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: #4361ee;
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .error-btn:hover { background: #3a56d4; transform: translateY(-2px); }
+        .error-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <div class="error-icon"><i class="fas fa-map-signs"></i></div>
+        <div class="error-code">404</div>
+        <div class="error-title">الصفحة غير موجودة!</div>
+        <div class="error-msg">عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.</div>
+        <a href="/dashboard/" class="error-btn">
+            <i class="fas fa-home"></i> العودة للرئيسية
+        </a>
+    </div>
+</body>
+</html>

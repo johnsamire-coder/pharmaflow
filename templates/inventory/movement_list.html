@@ -1,0 +1,72 @@
+{% extends "core/base.html" %}
+{% block title %}حركات المخزون{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">حركات المخزون</h3>
+    <a href="{% url 'inventory:batch_create' %}" class="btn btn-primary">+ استلام تشغيلة</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-5">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="بحث بالصنف / التشغيلة">
+            </div>
+            <div class="col-md-3">
+                <select name="warehouse" class="form-select">
+                    <option value="">كل المخازن</option>
+                    {% for w in warehouses %}
+                        <option value="{{ w.id }}" {% if request.GET.warehouse == w.id|stringformat:'s' %}selected{% endif %}>{{ w.warehouse_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="movement_type" class="form-select">
+                    <option value="">كل الأنواع</option>
+                    {% for key, label in movement_types %}
+                        <option value="{{ key }}" {% if request.GET.movement_type == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-outline-primary w-100">بحث</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>التاريخ</th>
+                    <th>النوع</th>
+                    <th>الصنف</th>
+                    <th>التشغيلة</th>
+                    <th>المخزن</th>
+                    <th>الكمية</th>
+                    <th>المرجع</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in movements %}
+                <tr>
+                    <td>{{ item.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ item.get_movement_type_display }}</td>
+                    <td>{{ item.product.product_name }}</td>
+                    <td>{{ item.batch.batch_number }}</td>
+                    <td>{{ item.warehouse.warehouse_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.reference_type|default:"-" }} {{ item.reference_id|default:"" }}</td>
+                    <td>{{ item.notes|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center py-4">لا توجد حركات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

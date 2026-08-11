@@ -1,0 +1,73 @@
+{% extends "core/base.html" %}
+{% block title %}أعمار الديون{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">تقرير أعمار الديون</h3>
+    <div class="d-flex gap-2">
+        <span class="text-muted small">تاريخ التقرير: {{ today }}</span>
+        <button onclick="window.print()" class="btn btn-outline-dark btn-sm no-print">🖨️ طباعة</button>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    {% for key, bucket in buckets.items %}
+    <div class="col-md">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <div class="small text-muted">{{ bucket.label }}</div>
+                <div class="fs-5 fw-bold {% if bucket.total > 0 and key != 'current' %}text-danger{% elif key == 'current' %}text-success{% endif %}">
+                    {{ bucket.total|floatformat:2 }}
+                </div>
+                <div class="small text-muted">{{ bucket.invoices|length }} فاتورة</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <div class="col-md">
+        <div class="card shadow-sm text-center bg-dark text-white">
+            <div class="card-body">
+                <div class="small">الإجمالي</div>
+                <div class="fs-5 fw-bold">{{ grand_total|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="mb-3">ملخص حسب العميل</h5>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>العميل</th>
+                        <th>جاري</th>
+                        <th>1-30 يوم</th>
+                        <th>31-60 يوم</th>
+                        <th>61-90 يوم</th>
+                        <th>>90 يوم</th>
+                        <th>الإجمالي</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in customer_summary %}
+                    <tr>
+                        <td>{{ row.customer.pharmacy_name }}</td>
+                        <td>{{ row.current|floatformat:2 }}</td>
+                        <td class="{% if row.1_30 > 0 %}text-warning{% endif %}">{{ row.1_30|floatformat:2 }}</td>
+                        <td class="{% if row.31_60 > 0 %}text-orange{% endif %}">{{ row.31_60|floatformat:2 }}</td>
+                        <td class="{% if row.61_90 > 0 %}text-danger{% endif %}">{{ row.61_90|floatformat:2 }}</td>
+                        <td class="{% if row.over_90 > 0 %}text-danger fw-bold{% endif %}">{{ row.over_90|floatformat:2 }}</td>
+                        <td class="fw-bold">{{ row.total|floatformat:2 }}</td>
+                        <td>
+                            <a href="{% url 'collections:customer_statement' row.customer.pk %}" class="btn btn-xs btn-outline-info btn-sm">كشف</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

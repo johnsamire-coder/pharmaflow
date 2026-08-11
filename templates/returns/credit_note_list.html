@@ -1,0 +1,43 @@
+{% extends "core/base.html" %}
+{% block title %}الإشعارات الدائنة{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">الإشعارات الدائنة</h3>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>رقم الإشعار</th>
+                    <th>العميل</th>
+                    <th>المرتجع</th>
+                    <th>المبلغ</th>
+                    <th>الحالة</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cn in credit_notes %}
+                <tr>
+                    <td>{{ cn.credit_note_number }}</td>
+                    <td>{{ cn.customer.pharmacy_name }}</td>
+                    <td>{{ cn.return_order.return_number|default:"-" }}</td>
+                    <td class="text-success fw-bold">{{ cn.amount|floatformat:2 }}</td>
+                    <td>
+                        {% if cn.status == 'issued' %}<span class="badge bg-warning text-dark">صادر</span>
+                        {% elif cn.status == 'applied' %}<span class="badge bg-success">مطبق</span>
+                        {% elif cn.status == 'cancelled' %}<span class="badge bg-secondary">ملغي</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ cn.created_at|date:"Y-m-d" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4">لا توجد إشعارات دائنة</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

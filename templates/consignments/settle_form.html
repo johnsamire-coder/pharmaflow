@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+{% block title %}تسوية أمر التصريف - {{ consignment.consignment_number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-check-circle me-2 text-success"></i>
+        تسوية أمر التصريف: {{ consignment.consignment_number }}
+    </h2>
+    <a href="{% url 'consignments:detail' consignment.pk %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>رجوع
+    </a>
+</div>
+
+<div class="alert alert-success">
+    <i class="fas fa-info-circle me-2"></i>
+    أدخل الكميات المباعة فعلياً من كل منتج. سيتم احتساب المتبقي كمرتجع تلقائياً.
+    <br>العميل: <strong>{{ consignment.customer.customer_name }}</strong>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-success text-white fw-bold">
+            <i class="fas fa-list me-2"></i>الكميات المباعة
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>المنتج</th>
+                            <th class="text-center">المرسل</th>
+                            <th class="text-center">المرتجع</th>
+                            <th class="text-center text-success fw-bold">المتبقي للتسوية</th>
+                            <th class="text-center">الكمية المباعة</th>
+                            <th>سعر الوحدة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="fw-bold">{{ item.product.product_name }}</td>
+                            <td class="text-center">{{ item.quantity_sent }}</td>
+                            <td class="text-center text-warning">{{ item.quantity_returned }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-success fs-6">{{ item.quantity_remaining }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if item.quantity_remaining > 0 %}
+                                <input type="number"
+                                       name="sold_qty_{{ item.id }}"
+                                       min="0"
+                                       max="{{ item.quantity_remaining }}"
+                                       value="{{ item.quantity_remaining }}"
+                                       class="form-control form-control-sm text-center sold-qty"
+                                       data-price="{{ item.unit_price }}"
+                                       style="width: 100px; margin: 0 auto;">
+                                {% else %}
+                                <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.unit_price|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-success">
+                        <tr>
+                            <td colspan="5" class="fw-bold text-end">إجمالي قيمة المباع:</td>
+                            <td class="fw-bold fs-5" id="totalSold">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <label class="form-label">ملاحظات التسوية</label>
+            {{ form.notes }}
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'consignments:detail' consignment.pk %}" class="btn btn-secondary">
+            <i class="fas fa-times me-1"></i>إلغاء
+        </a>
+        <button type="submit" class="btn btn-success btn-lg"
+                onclick="return confirm('تأكيد التسوية؟ هذا الإجراء لا يمكن التراجع عنه')">
+            <i class="fas fa-check-circle me-1"></i>تأكيد التسوية
+        </button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function calcTotal() {
+        let total = 0;
+        document.querySelectorAll('.sold-qty').forEach(function(input) {
+            const qty = parseFloat(input.value) || 0;
+            const price = parseFloat(input.dataset.price) || 0;
+            total += qty * price;
+        });
+        document.getElementById('totalSold').textContent = total.toLocaleString('ar-EG', {
+            minimumFractionDigits: 2, maximumFractionDigits: 2
+        });
+    }
+    document.querySelectorAll('.sold-qty').forEach(function(input) {
+        input.addEventListener('input', calcTotal);
+    });
+    calcTotal();
+});
+</script>
+{% endblock %}

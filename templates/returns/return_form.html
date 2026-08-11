@@ -1,0 +1,177 @@
+{% extends "core/base.html" %}
+{% block title %}مرتجع جديد{% endblock %}
+{% block content %}
+<h3 class="mb-4">مرتجع جديد</h3>
+
+<form method="post" id="returnForm">
+    {% csrf_token %}
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">بيانات المرتجع</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">العميل</label>
+                    {{ form.customer }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الفاتورة الأصلية</label>
+                    {{ form.invoice }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">التاريخ</label>
+                    {{ form.return_date }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">السبب</label>
+                    {{ form.return_reason }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">ملاحظات</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">الأصناف المرتجعة</h5>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addReturnRow()">+ إضافة صنف</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" id="returnItemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الصنف</th>
+                            <th>التشغيلة</th>
+                            <th>الكمية</th>
+                            <th>السعر</th>
+                            <th>الإجمالي</th>
+                            <th>الحالة</th>
+                            <th>القرار</th>
+                            <th>حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="returnItemsBody">
+                        <tr id="return_row_0">
+                            <td>
+                                <select name="item_product_id" class="form-select form-select-sm return-product-select" onchange="filterBatches(this)">
+                                    <option value="">-- اختر صنف --</option>
+                                    {% for p in products %}
+                                        <option value="{{ p.id }}">{{ p.product_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <select name="item_batch_id" class="form-select form-select-sm return-batch-select">
+                                    <option value="">-- اختر تشغيلة --</option>
+                                    {% for b in batches %}
+                                        <option value="{{ b.id }}" data-product="{{ b.product.id }}">{{ b.batch_number }} ({{ b.expiry_date }})</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" name="item_quantity" class="form-control form-control-sm return-qty" min="1" value="1" onchange="updateReturnTotal(this)"></td>
+                            <td><input type="number" name="item_price" class="form-control form-control-sm return-price" step="0.01" value="0" onchange="updateReturnTotal(this)"></td>
+                            <td><input type="text" class="form-control form-control-sm return-total" readonly value="0"></td>
+                            <td>
+                                <select name="item_condition" class="form-select form-select-sm">
+                                    <option value="good">صالح للبيع</option>
+                                    <option value="damaged">تالف</option>
+                                    <option value="expired">منتهي</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="item_disposition" class="form-select form-select-sm">
+                                    <option value="return_to_stock">إعادة للمخزن</option>
+                                    <option value="destroy">إتلاف</option>
+                                    <option value="quarantine">حجر صحي</option>
+                                </select>
+                            </td>
+                            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeReturnRow(this)">حذف</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">إرسال للاعتماد</button>
+        <a href="{% url 'returns:return_list' %}" class="btn btn-light">إلغاء</a>
+    </div>
+</form>
+
+<script>
+let returnRowCount = 1;
+
+const allBatches = [
+    {% for b in batches %}
+    { id: '{{ b.id }}', product_id: '{{ b.product.id }}', label: '{{ b.batch_number }} ({{ b.expiry_date }})' },
+    {% endfor %}
+];
+
+function filterBatches(selectEl) {
+    const productId = selectEl.value;
+    const row = selectEl.closest('tr');
+    const batchSelect = row.querySelector('.return-batch-select');
+    batchSelect.innerHTML = '<option value="">-- اختر تشغيلة --</option>';
+
+    allBatches.forEach(b => {
+        if (!productId || b.product_id === productId) {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.label;
+            batchSelect.appendChild(opt);
+        }
+    });
+}
+
+function updateReturnTotal(input) {
+    const row = input.closest('tr');
+    const qty = parseFloat(row.querySelector('.return-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.return-price').value) || 0;
+    row.querySelector('.return-total').value = (qty * price).toFixed(2);
+}
+
+function addReturnRow() {
+    const tbody = document.getElementById('returnItemsBody');
+    const firstRow = document.getElementById('return_row_0');
+    const newRow = firstRow.cloneNode(true);
+    newRow.id = 'return_row_' + returnRowCount;
+    newRow.querySelector('.return-product-select').value = '';
+    newRow.querySelector('.return-batch-select').innerHTML = '<option value="">-- اختر تشغيلة --</option>';
+    allBatches.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.label;
+        opt.setAttribute('data-product', b.product_id);
+        newRow.querySelector('.return-batch-select').appendChild(opt);
+    });
+    newRow.querySelector('.return-qty').value = 1;
+    newRow.querySelector('.return-price').value = 0;
+    newRow.querySelector('.return-total').value = 0;
+    tbody.appendChild(newRow);
+    returnRowCount++;
+}
+
+function removeReturnRow(btn) {
+    const rows = document.querySelectorAll('#returnItemsBody tr');
+    if (rows.length > 1) {
+        btn.closest('tr').remove();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const customerSelect = document.getElementById('id_customer');
+    if (customerSelect) {
+        customerSelect.addEventListener('change', function() {
+            if (this.value) {
+                window.location.href = '?customer_id=' + this.value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

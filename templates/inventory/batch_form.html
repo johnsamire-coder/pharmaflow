@@ -1,0 +1,70 @@
+{% extends "core/base.html" %}
+{% block title %}التشغيلة{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{% if object %}تعديل تشغيلة{% else %}تشغيلة جديدة{% endif %}</h3>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                {% if not object %}
+                <div class="col-md-6">
+                    <label class="form-label">المخزن</label>
+                    {{ form.warehouse }}
+                </div>
+                {% endif %}
+                <div class="col-md-6">
+                    <label class="form-label">الصنف</label>
+                    {{ form.product }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">رقم التشغيلة</label>
+                    {{ form.batch_number }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الكمية المستلمة</label>
+                    {{ form.quantity_received }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الفاقد / العجز</label>
+                    {{ form.quantity_defective }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">تاريخ الإنتاج</label>
+                    {{ form.production_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">تاريخ الصلاحية</label>
+                    {{ form.expiry_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">تاريخ الاستلام</label>
+                    {{ form.received_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">تكلفة الوحدة</label>
+                    {{ form.unit_cost }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الحالة</label>
+                    {{ form.status }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">ملاحظات</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button class="btn btn-primary">حفظ</button>
+                <a href="{% url 'inventory:batch_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

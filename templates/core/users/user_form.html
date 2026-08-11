@@ -1,0 +1,74 @@
+{% extends "core/base.html" %}
+{% block title %}{% if is_edit %}تعديل مستخدم{% else %}مستخدم جديد{% endif %}{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{% if is_edit %}تعديل: {{ user_obj.username }}{% else %}مستخدم جديد{% endif %}</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                {% if not is_edit %}
+                <div class="col-md-6">
+                    <label class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                {% endif %}
+
+                <div class="col-md-6">
+                    <label class="form-label">الاسم الكامل</label>
+                    <input type="text" name="full_name" class="form-control"
+                           value="{{ user_obj.full_name|default:'' }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">الإيميل</label>
+                    <input type="email" name="email" class="form-control"
+                           value="{{ user_obj.email|default:'' }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">التليفون</label>
+                    <input type="text" name="phone" class="form-control"
+                           value="{{ user_obj.phone|default:'' }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">الدور</label>
+                    <select name="role_id" class="form-select">
+                        <option value="">-- بدون دور --</option>
+                        {% for role in roles %}
+                            <option value="{{ role.id }}"
+                                {% if user_obj and user_obj.role_id == role.id %}selected{% endif %}>
+                                {{ role.role_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">
+                        {% if is_edit %}كلمة مرور جديدة (اتركها فارغة إذا لا تريد تغييرها)
+                        {% else %}كلمة المرور <span class="text-danger">*</span>
+                        {% endif %}
+                    </label>
+                    <input type="password" name="{% if is_edit %}new_password{% else %}password{% endif %}"
+                           class="form-control" {% if not is_edit %}required{% endif %}>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input type="checkbox" name="is_active" class="form-check-input"
+                               id="is_active" {% if not user_obj or user_obj.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">فعال</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a href="{% url 'core:user_list' %}" class="btn btn-light">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

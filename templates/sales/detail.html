@@ -1,0 +1,221 @@
+{% extends 'core/base.html' %}
+{% block title %}فاتورة {{ invoice.invoice_number }}{% endblock %}
+{% block page_title %}تفاصيل الفاتورة{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <div>
+        <h2><i class="fas fa-file-invoice-dollar me-2"></i>{{ invoice.invoice_number }}</h2>
+        <div style="margin-top:4px;">
+            {% if invoice.status == 'paid' %}
+            <span class="pf-badge pf-badge-success"><i class="fas fa-check me-1"></i>مدفوعة بالكامل</span>
+            {% elif invoice.status == 'partial' %}
+            <span class="pf-badge pf-badge-warning"><i class="fas fa-clock me-1"></i>مدفوعة جزئياً</span>
+            {% else %}
+            <span class="pf-badge pf-badge-danger"><i class="fas fa-times me-1"></i>غير مدفوعة</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pf-page-header-actions">
+        <a href="{% url 'sales:print' invoice.pk %}" class="pf-btn pf-btn-secondary" target="_blank">
+            <i class="fas fa-print"></i> طباعة
+        </a>
+        {% if invoice.status != 'paid' %}
+        <a href="{% url 'customer_collections:create' %}?invoice={{ invoice.pk }}" class="pf-btn pf-btn-success">
+            <i class="fas fa-hand-holding-usd"></i> تحصيل
+        </a>
+        {% endif %}
+        <a href="{% url 'sales:list' %}" class="pf-btn pf-btn-secondary">
+            <i class="fas fa-arrow-right"></i> رجوع
+        </a>
+    </div>
+</div>
+
+<!-- ملخص سريع -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-file-invoice"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي الفاتورة</div>
+                <div class="pf-stat-value" style="font-size:20px;">{{ invoice.total_amount|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-check-circle"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">المدفوع</div>
+                <div class="pf-stat-value" style="font-size:20px;">{{ invoice.paid_amount|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-danger">
+            <div class="pf-stat-icon icon-danger"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">المتبقي</div>
+                <div class="pf-stat-value" style="font-size:20px;">{{ invoice.remaining_amount|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-percent"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">الخصم</div>
+                <div class="pf-stat-value" style="font-size:20px;">{{ invoice.discount_amount|floatformat:2|default:"0.00" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <!-- بيانات الفاتورة -->
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-info-circle me-2"></i>بيانات الفاتورة</h6>
+            </div>
+            <div class="pf-card-body">
+                <div class="pf-info-grid" style="grid-template-columns:1fr;">
+                    <div class="pf-info-item">
+                        <div class="label">العميل</div>
+                        <div class="value">
+                            <a href="{% url 'customers:detail' invoice.customer.pk %}"
+                               style="color:var(--pf-primary);text-decoration:none;">
+                                {{ invoice.customer.customer_name }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="pf-info-item">
+                        <div class="label">تاريخ الفاتورة</div>
+                        <div class="value">{{ invoice.invoice_date|date:"Y/m/d" }}</div>
+                    </div>
+                    <div class="pf-info-item">
+                        <div class="label">تاريخ الاستحقاق</div>
+                        <div class="value">{{ invoice.due_date|date:"Y/m/d"|default:"-" }}</div>
+                    </div>
+                    {% if invoice.sales_rep %}
+                    <div class="pf-info-item">
+                        <div class="label">المندوب</div>
+                        <div class="value">{{ invoice.sales_rep.get_full_name }}</div>
+                    </div>
+                    {% endif %}
+                    {% if invoice.notes %}
+                    <div class="pf-info-item">
+                        <div class="label">ملاحظات</div>
+                        <div class="value" style="font-size:13px;">{{ invoice.notes }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- تقدم السداد -->
+        {% if invoice.total_amount %}
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-chart-pie me-2"></i>تقدم السداد</h6>
+            </div>
+            <div class="pf-card-body">
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+                        <span style="color:#888;">نسبة السداد</span>
+                        <span style="font-weight:700;">
+                            {% widthratio invoice.paid_amount invoice.total_amount 100 %}%
+                        </span>
+                    </div>
+                    <div class="pf-progress">
+                        <div class="pf-progress-bar {% if invoice.status == 'paid' %}bar-success{% elif invoice.status == 'partial' %}bar-warning{% else %}bar-danger{% endif %}"
+                             style="width:{% widthratio invoice.paid_amount invoice.total_amount 100 %}%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- بنود الفاتورة -->
+    <div class="col-md-8">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-list me-2"></i>بنود الفاتورة</h6>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="pf-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المنتج</th>
+                            <th>الدفعة</th>
+                            <th class="text-center">الكمية</th>
+                            <th>سعر الوحدة</th>
+                            <th>الخصم</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.items.all %}
+                        <tr>
+                            <td style="color:#aaa;">{{ forloop.counter }}</td>
+                            <td style="font-weight:700;">{{ item.product.product_name }}</td>
+                            <td>
+                                {% if item.batch %}
+                                <code style="background:#f0f2f8;padding:2px 8px;border-radius:6px;font-size:11px;">{{ item.batch.batch_number }}</code>
+                                {% else %}-{% endif %}
+                            </td>
+                            <td style="text-align:center;font-weight:700;font-size:15px;">{{ item.quantity }}</td>
+                            <td>{{ item.unit_price|floatformat:2 }}</td>
+                            <td style="color:var(--pf-warning);">{{ item.discount_amount|floatformat:2|default:"0.00" }}</td>
+                            <td style="font-weight:700;color:var(--pf-primary);">{{ item.line_total|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8f9fc;">
+                            <td colspan="6" style="text-align:left;font-weight:700;padding:14px 16px;">المجموع الكلي:</td>
+                            <td style="font-weight:800;font-size:16px;color:var(--pf-primary);padding:14px 16px;">{{ invoice.total_amount|floatformat:2 }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- البونص المرتبط -->
+        {% if invoice.bonuses.exists %}
+        <div class="pf-card">
+            <div class="pf-card-header" style="background:var(--pf-warning-light);">
+                <h6><i class="fas fa-gift me-2 text-warning"></i>البونص المرتبط</h6>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="pf-table">
+                    <thead>
+                        <tr>
+                            <th>المنتج</th>
+                            <th>الكمية</th>
+                            <th>النوع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bonus in invoice.bonuses.all %}
+                        <tr>
+                            <td style="font-weight:600;">{{ bonus.product.product_name }}</td>
+                            <td style="font-weight:700;">{{ bonus.bonus_quantity }}</td>
+                            <td>
+                                <span class="pf-badge pf-badge-warning">
+                                    {% if bonus.bonus_type == 'percentage' %}نسبة{% else %}كمية{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

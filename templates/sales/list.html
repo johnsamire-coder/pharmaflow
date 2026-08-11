@@ -1,0 +1,178 @@
+{% extends 'core/base.html' %}
+{% block title %}المبيعات{% endblock %}
+{% block page_title %}المبيعات والفواتير{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-file-invoice-dollar me-2"></i>المبيعات</h2>
+    <div class="pf-page-header-actions">
+        <a href="{% url 'sales:create' %}" class="pf-btn pf-btn-primary">
+            <i class="fas fa-plus"></i> فاتورة جديدة
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-file-invoice"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي الفواتير</div>
+                <div class="pf-stat-value">{{ invoices.paginator.count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-check-double"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">مدفوعة</div>
+                <div class="pf-stat-value">{{ paid_count|default:"--" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-clock"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">جزئية الدفع</div>
+                <div class="pf-stat-value">{{ partial_count|default:"--" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-danger">
+            <div class="pf-stat-icon icon-danger"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">غير مدفوعة</div>
+                <div class="pf-stat-value">{{ unpaid_count|default:"--" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="pf-filters mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+                   class="pf-form-control" placeholder="رقم الفاتورة أو العميل...">
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="pf-form-select">
+                <option value="">كل الحالات</option>
+                <option value="unpaid" {% if request.GET.status == 'unpaid' %}selected{% endif %}>غير مدفوعة</option>
+                <option value="partial" {% if request.GET.status == 'partial' %}selected{% endif %}>جزئية</option>
+                <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>مدفوعة</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}"
+                   class="pf-form-control">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}"
+                   class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="pf-btn pf-btn-primary me-2">
+                <i class="fas fa-search"></i> بحث
+            </button>
+            <a href="{% url 'sales:list' %}" class="pf-btn pf-btn-secondary">
+                <i class="fas fa-redo"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-list me-2"></i>الفواتير</h6>
+        <span class="pf-badge pf-badge-primary">{{ invoices.paginator.count }} فاتورة</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>رقم الفاتورة</th>
+                    <th>العميل</th>
+                    <th>التاريخ</th>
+                    <th>المبلغ الإجمالي</th>
+                    <th>المدفوع</th>
+                    <th>المتبقي</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr>
+                    <td>
+                        <a href="{% url 'sales:detail' invoice.pk %}"
+                           style="font-weight:700;color:var(--pf-primary);text-decoration:none;">
+                            {{ invoice.invoice_number }}
+                        </a>
+                    </td>
+                    <td style="font-weight:600;">{{ invoice.customer.customer_name }}</td>
+                    <td style="color:#888;font-size:13px;">{{ invoice.invoice_date|date:"Y/m/d" }}</td>
+                    <td style="font-weight:700;">{{ invoice.total_amount|floatformat:2 }}</td>
+                    <td style="color:var(--pf-success);font-weight:600;">{{ invoice.paid_amount|floatformat:2 }}</td>
+                    <td style="color:var(--pf-danger);font-weight:600;">{{ invoice.remaining_amount|floatformat:2 }}</td>
+                    <td>
+                        {% if invoice.status == 'paid' %}
+                        <span class="pf-badge pf-badge-success"><i class="fas fa-check me-1"></i>مدفوعة</span>
+                        {% elif invoice.status == 'partial' %}
+                        <span class="pf-badge pf-badge-warning"><i class="fas fa-clock me-1"></i>جزئية</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-danger"><i class="fas fa-times me-1"></i>غير مدفوعة</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{% url 'sales:detail' invoice.pk %}" class="pf-btn-icon" title="تفاصيل">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'sales:print' invoice.pk %}" class="pf-btn-icon" title="طباعة" target="_blank">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="pf-empty">
+                            <i class="fas fa-file-invoice"></i>
+                            <h5>لا توجد فواتير</h5>
+                            <a href="{% url 'sales:create' %}" class="pf-btn pf-btn-primary">
+                                <i class="fas fa-plus"></i> فاتورة جديدة
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<div class="pf-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+    <span class="active">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+    <a href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

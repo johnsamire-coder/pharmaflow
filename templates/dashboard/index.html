@@ -1,0 +1,290 @@
+{% extends 'core/base.html' %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block page_title %}لوحة التحكم{% endblock %}
+
+{% block content %}
+<div class="pf-card" style="background: linear-gradient(135deg, #4361ee 0%, #7209b7 100%); color: white; border: none;">
+    <div class="pf-card-body">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 style="font-weight: 800; margin-bottom: 8px;">
+                    مرحباً، {{ request.user.first_name|default:request.user.username }}! 👋
+                </h3>
+                <p style="opacity: 0.85; margin: 0; font-size: 14px;">
+                    هذا ملخص أعمالك اليوم في
+                    <strong>{{ request.company.company_name }}</strong>
+                </p>
+            </div>
+            <div class="col-md-4 text-end d-none d-md-block">
+                <i class="fas fa-capsules" style="font-size: 64px; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-file-invoice-dollar"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">مبيعات اليوم</div>
+                <div class="pf-stat-value">{{ today_sales|default:"0" }}</div>
+                <div class="pf-stat-change up">{{ today_sales_amount|default:"0.00" }} ج.م</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-hand-holding-usd"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">تحصيلات اليوم</div>
+                <div class="pf-stat-value">{{ today_collections|default:"0" }}</div>
+                <div class="pf-stat-change up">{{ today_collections_amount|default:"0.00" }} ج.م</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-pills"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">المنتجات</div>
+                <div class="pf-stat-value">{{ total_products|default:"0" }}</div>
+                <div class="pf-stat-change">{{ low_stock|default:"0" }} تحت الحد</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-danger">
+            <div class="pf-stat-icon icon-danger"><i class="fas fa-user-tie"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">العملاء</div>
+                <div class="pf-stat-value">{{ total_customers|default:"0" }}</div>
+                <div class="pf-stat-change">{{ active_customers|default:"0" }} نشط</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-info">
+            <div class="pf-stat-icon icon-info"><i class="fas fa-warehouse"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي المخزون</div>
+                <div class="pf-stat-value">{{ total_stock|default:"0" }}</div>
+                <div class="pf-stat-change">وحدة</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">قارب على الانتهاء</div>
+                <div class="pf-stat-value">{{ expiring_soon|default:"0" }}</div>
+                <div class="pf-stat-change">دفعة</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-undo-alt"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">المرتجعات هذا الشهر</div>
+                <div class="pf-stat-value">{{ month_returns|default:"0" }}</div>
+                <div class="pf-stat-change">{{ month_returns_amount|default:"0.00" }} ج.م</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-boxes-stacked"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">تحت التصريف</div>
+                <div class="pf-stat-value">{{ active_consignments|default:"0" }}</div>
+                <div class="pf-stat-change">أمر نشط</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-bolt me-2 text-warning"></i>إجراءات سريعة</h6>
+    </div>
+    <div class="pf-card-body">
+        <div class="row g-3">
+            <div class="col-md-2 col-sm-4 col-6"><a href="/sales/create/" class="pf-quick-action"><i class="fas fa-plus-circle text-primary"></i><span>فاتورة جديدة</span></a></div>
+            <div class="col-md-2 col-sm-4 col-6"><a href="/collections/create/" class="pf-quick-action"><i class="fas fa-hand-holding-usd text-success"></i><span>تحصيل جديد</span></a></div>
+            <div class="col-md-2 col-sm-4 col-6"><a href="/returns/create/" class="pf-quick-action"><i class="fas fa-undo-alt text-warning"></i><span>مرتجع جديد</span></a></div>
+            <div class="col-md-2 col-sm-4 col-6"><a href="/products/create/" class="pf-quick-action"><i class="fas fa-pills text-info"></i><span>منتج جديد</span></a></div>
+            <div class="col-md-2 col-sm-4 col-6"><a href="/customers/create/" class="pf-quick-action"><i class="fas fa-user-plus text-danger"></i><span>عميل جديد</span></a></div>
+            <div class="col-md-2 col-sm-4 col-6"><a href="/reports/" class="pf-quick-action"><i class="fas fa-chart-pie text-secondary"></i><span>التقارير</span></a></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-chart-line me-2"></i>المبيعات (آخر 7 أيام)</h6>
+            </div>
+            <div class="pf-card-body">
+                <canvas id="salesChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-chart-doughnut me-2"></i>حالة المخزون</h6>
+            </div>
+            <div class="pf-card-body">
+                <canvas id="stockChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-clock me-2"></i>آخر الفواتير</h6>
+                <a href="/sales/" class="pf-btn pf-btn-sm pf-btn-outline">عرض الكل</a>
+            </div>
+            <div class="pf-card-body p-0">
+                <table class="pf-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>العميل</th>
+                            <th>المبلغ</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in recent_invoices %}
+                        <tr>
+                            <td><a href="/sales/{{ inv.pk }}/" style="color: var(--pf-primary); text-decoration: none; font-weight: 600;">{{ inv.invoice_number }}</a></td>
+                            <td>{{ inv.customer.customer_name|truncatechars:20 }}</td>
+                            <td class="fw-bold">{{ inv.total_amount|floatformat:2 }}</td>
+                            <td>
+                                <span class="pf-badge pf-badge-{% if inv.status == 'paid' %}success{% elif inv.status == 'partial' %}warning{% else %}danger{% endif %}">
+                                    {{ inv.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">لا توجد فواتير</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-bell me-2"></i>آخر الإشعارات</h6>
+                <a href="/notifications/" class="pf-btn pf-btn-sm pf-btn-outline">عرض الكل</a>
+            </div>
+            <div class="pf-card-body p-0">
+                {% for notif in recent_notifications %}
+                <div class="d-flex align-items-start gap-3 p-3 {% if not forloop.last %}border-bottom{% endif %}" style="border-color: #f3f4f7 !important;">
+                    <div class="pf-stat-icon icon-{% if notif.notification_type == 'warning' %}warning{% elif notif.notification_type == 'error' %}danger{% else %}info{% endif %}" style="width: 38px; height: 38px; border-radius: 10px; font-size: 14px; flex-shrink: 0;">
+                        <i class="fas {% if notif.notification_type == 'warning' %}fa-exclamation-triangle{% elif notif.notification_type == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600; color: #333;">{{ notif.title }}</div>
+                        <div style="font-size: 12px; color: #888;">{{ notif.created_at|timesince }} مضت</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-check-circle d-block mb-2" style="font-size: 24px; opacity: 0.3;"></i>
+                    لا توجد إشعارات جديدة
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+<script>
+const salesCtx = document.getElementById('salesChart');
+if (salesCtx) {
+    new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe|default:'[]' }},
+            datasets: [{
+                label: 'المبيعات',
+                data: {{ chart_data|safe|default:'[]' }},
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67, 97, 238, 0.08)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#4361ee',
+                pointBorderColor: 'white',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+const stockCtx = document.getElementById('stockChart');
+if (stockCtx) {
+    new Chart(stockCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['متاح', 'منخفض', 'منتهي'],
+            datasets: [{
+                data: [
+                    {{ stock_available|default:0 }},
+                    {{ stock_low|default:0 }},
+                    {{ stock_expired|default:0 }}
+                ],
+                backgroundColor: ['#2dc653', '#f0a500', '#ef233c'],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, padding: 16 }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

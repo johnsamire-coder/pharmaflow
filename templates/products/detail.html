@@ -1,0 +1,158 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ product.product_name }}{% endblock %}
+{% block page_title %}تفاصيل المنتج{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <div>
+        <h2><i class="fas fa-pills me-2"></i>{{ product.product_name }}</h2>
+        <div style="margin-top:4px;">
+            {% if product.is_active %}
+            <span class="pf-badge pf-badge-success"><i class="fas fa-circle" style="font-size:8px;"></i> نشط</span>
+            {% else %}
+            <span class="pf-badge pf-badge-secondary">غير نشط</span>
+            {% endif %}
+            {% if product.product_code %}
+            <span class="pf-badge pf-badge-secondary" style="margin-right:8px;">
+                <i class="fas fa-barcode me-1"></i>{{ product.product_code }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="pf-page-header-actions">
+        <a href="{% url 'products:edit' product.pk %}" class="pf-btn pf-btn-primary">
+            <i class="fas fa-edit"></i> تعديل
+        </a>
+        <a href="{% url 'products:list' %}" class="pf-btn pf-btn-secondary">
+            <i class="fas fa-arrow-right"></i> رجوع
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- معلومات المنتج -->
+    <div class="col-md-8">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-info-circle me-2"></i>معلومات المنتج</h6>
+            </div>
+            <div class="pf-card-body">
+                <div class="pf-info-grid">
+                    <div class="pf-info-item">
+                        <div class="label">اسم المنتج</div>
+                        <div class="value">{{ product.product_name }}</div>
+                    </div>
+                    <div class="pf-info-item">
+                        <div class="label">الفئة</div>
+                        <div class="value">{{ product.category.name|default:"-" }}</div>
+                    </div>
+                    <div class="pf-info-item">
+                        <div class="label">الوحدة</div>
+                        <div class="value">{{ product.unit|default:"-" }}</div>
+                    </div>
+                    <div class="pf-info-item">
+                        <div class="label">الحد الأدنى للمخزون</div>
+                        <div class="value">{{ product.min_stock_level|default:"0" }}</div>
+                    </div>
+                </div>
+                {% if product.description %}
+                <div style="margin-top:16px;padding:16px;background:#f8f9fc;border-radius:10px;">
+                    <div style="font-size:12px;color:#888;margin-bottom:6px;">الوصف</div>
+                    <div style="font-size:14px;color:#444;">{{ product.description }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- المخزون الحالي -->
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-warehouse me-2"></i>المخزون الحالي</h6>
+                <a href="{% url 'inventory:add_stock' %}?product={{ product.pk }}" class="pf-btn pf-btn-sm pf-btn-primary">
+                    <i class="fas fa-plus"></i> إضافة مخزون
+                </a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="pf-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الدفعة</th>
+                            <th>الكمية المتاحة</th>
+                            <th>تاريخ الانتهاء</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in product.batches.all %}
+                        {% if batch.status == 'available' %}
+                        <tr>
+                            <td><code style="background:#f0f2f8;padding:3px 8px;border-radius:6px;">{{ batch.batch_number }}</code></td>
+                            <td style="font-weight:700;font-size:16px;">{{ batch.quantity_available }}</td>
+                            <td style="color:{% if batch.is_expired %}var(--pf-danger){% elif batch.days_until_expiry < 30 %}var(--pf-warning){% else %}var(--pf-success){% endif %};font-weight:600;">
+                                {{ batch.expiry_date|date:"Y/m/d" }}
+                            </td>
+                            <td><span class="pf-badge pf-badge-success">متاح</span></td>
+                        </tr>
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align:center;color:#aaa;padding:24px;">لا يوجد مخزون</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- التسعير -->
+    <div class="col-md-4">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-tag me-2"></i>التسعير</h6>
+            </div>
+            <div class="pf-card-body">
+                <div style="text-align:center;padding:20px;background:var(--pf-primary-light);border-radius:12px;margin-bottom:12px;">
+                    <div style="font-size:12px;color:var(--pf-primary);font-weight:600;margin-bottom:4px;">سعر البيع</div>
+                    <div style="font-size:28px;font-weight:800;color:var(--pf-primary);">{{ product.selling_price|floatformat:2 }}</div>
+                    <div style="font-size:12px;color:#888;">جنيه</div>
+                </div>
+                <div style="text-align:center;padding:16px;background:#f8f9fc;border-radius:12px;margin-bottom:12px;">
+                    <div style="font-size:12px;color:#888;margin-bottom:4px;">سعر الشراء</div>
+                    <div style="font-size:20px;font-weight:700;color:#444;">{{ product.purchase_price|floatformat:2 }}</div>
+                </div>
+                {% if product.selling_price and product.purchase_price %}
+                <div style="text-align:center;padding:12px;background:var(--pf-success-light);border-radius:12px;">
+                    <div style="font-size:12px;color:var(--pf-success);margin-bottom:2px;">هامش الربح</div>
+                    <div style="font-size:16px;font-weight:700;color:var(--pf-success);">
+                        {{ product.selling_price|add:"-"|add:product.purchase_price|floatformat:2 }} ج.م
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if product.bonus_percentage or product.bonus_quantity %}
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-gift me-2 text-warning"></i>البونص</h6>
+            </div>
+            <div class="pf-card-body">
+                {% if product.bonus_percentage %}
+                <div class="pf-info-item" style="margin-bottom:8px;">
+                    <div class="label">نسبة البونص</div>
+                    <div class="value">{{ product.bonus_percentage }}%</div>
+                </div>
+                {% endif %}
+                {% if product.bonus_quantity %}
+                <div class="pf-info-item">
+                    <div class="label">كمية البونص</div>
+                    <div class="value">{{ product.bonus_quantity }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

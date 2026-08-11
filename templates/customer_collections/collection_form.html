@@ -1,0 +1,193 @@
+{% extends "core/base.html" %}
+{% load collection_extras %}
+{% block title %}{% if is_edit %}تعديل سند قبض{% else %}سند قبض جديد{% endif %}{% endblock %}
+{% block content %}
+<h3 class="mb-4">{% if is_edit %}تعديل سند قبض{% else %}سند قبض جديد{% endif %}</h3>
+
+<form method="post" enctype="multipart/form-data" id="collectionForm">
+    {% csrf_token %}
+
+    <div class="row g-4">
+        <div class="col-md-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">بيانات التحصيل</h5>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">العميل</label>
+                            {{ form.customer }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">التاريخ</label>
+                            {{ form.collection_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المبلغ</label>
+                            {{ form.amount }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">طريقة السداد</label>
+                            {{ form.payment_method }}
+                        </div>
+
+                        <div class="col-12" id="field_reference" style="display:none">
+                            <label class="form-label">رقم التحويل / المرجع</label>
+                            {{ form.reference_number }}
+                        </div>
+
+                        <div class="col-md-6" id="field_bank" style="display:none">
+                            <label class="form-label">البنك</label>
+                            {{ form.bank_name }}
+                        </div>
+
+                        <div class="col-md-6" id="field_cheque_num" style="display:none">
+                            <label class="form-label">رقم الشيك</label>
+                            {{ form.cheque_number }}
+                        </div>
+
+                        <div class="col-md-6" id="field_cheque_due" style="display:none">
+                            <label class="form-label">تاريخ استحقاق الشيك</label>
+                            {{ form.cheque_due_date }}
+                        </div>
+
+                        <div class="col-md-6" id="field_due_date" style="display:none">
+                            <label class="form-label">تاريخ الاستحقاق</label>
+                            {{ form.due_date }}
+                        </div>
+
+                        <div class="col-12" id="field_attachment" style="display:none">
+                            <label class="form-label">مرفق (صورة التحويل / الشيك)</label>
+                            {{ form.attachment }}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">ملاحظات</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-3">ربط بالفواتير</h5>
+                    {% if pending_invoices %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>الفاتورة</th>
+                                    <th>المستحق</th>
+                                    <th>المبلغ المسدد</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inv in pending_invoices %}
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="invoice_id" value="{{ inv.id }}">
+                                        {{ inv.invoice_number }}<br>
+                                        <small class="text-muted">{{ inv.invoice_date }}</small>
+                                    </td>
+                                    <td class="text-danger fw-bold">{{ inv.amount_due|floatformat:2 }}</td>
+                                    <td>
+                                        <input type="number"
+                                               name="invoice_amount"
+                                               class="form-control form-control-sm invoice-amount"
+                                               step="0.01"
+                                               min="0"
+                                               value="{{ current_allocations|get_item:inv.id|default:'0' }}"
+                                               onchange="updateTotal()">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-info py-2 mt-2">
+                        إجمالي المطبق: <strong id="totalApplied">0.00</strong>
+                    </div>
+                    {% elif selected_customer %}
+                    <div class="alert alert-success">لا توجد فواتير مستحقة لهذا العميل</div>
+                    {% else %}
+                    <div class="alert alert-secondary">
+                        اختر العميل أولاً لعرض الفواتير المستحقة
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{% if is_edit %}حفظ التعديلات{% else %}حفظ السند{% endif %}</button>
+        <a href="{% url 'collections:collection_list' %}" class="btn btn-light">إلغاء</a>
+    </div>
+</form>
+
+<script>
+function toggleFields() {
+    const method = document.getElementById('id_payment_method').value;
+
+    const ref = document.getElementById('field_reference');
+    const bank = document.getElementById('field_bank');
+    const chequeNum = document.getElementById('field_cheque_num');
+    const chequeDue = document.getElementById('field_cheque_due');
+    const dueDate = document.getElementById('field_due_date');
+    const attach = document.getElementById('field_attachment');
+
+    ref.style.display = 'none';
+    bank.style.display = 'none';
+    chequeNum.style.display = 'none';
+    chequeDue.style.display = 'none';
+    dueDate.style.display = 'none';
+    attach.style.display = 'none';
+
+    if (['instapay_immediate', 'instapay_end_month', 'fawry_immediate', 'fawry_end_month'].includes(method)) {
+        ref.style.display = 'block';
+        attach.style.display = 'block';
+    }
+    if (method === 'bank_transfer') {
+        ref.style.display = 'block';
+        bank.style.display = 'block';
+        attach.style.display = 'block';
+    }
+    if (method === 'cheque') {
+        bank.style.display = 'block';
+        chequeNum.style.display = 'block';
+        chequeDue.style.display = 'block';
+        attach.style.display = 'block';
+    }
+    if (['cash_end_month', 'instapay_end_month', 'fawry_end_month'].includes(method)) {
+        dueDate.style.display = 'block';
+    }
+}
+
+function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.invoice-amount').forEach(el => {
+        total += parseFloat(el.value) || 0;
+    });
+    const target = document.getElementById('totalApplied');
+    if (target) {
+        target.textContent = total.toFixed(2);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleFields();
+    updateTotal();
+
+    const customerSelect = document.getElementById('id_customer');
+    if (customerSelect && !{{ is_edit|yesno:"true,false" }}) {
+        customerSelect.addEventListener('change', function() {
+            if (this.value) {
+                window.location.href = '?customer_id=' + this.value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

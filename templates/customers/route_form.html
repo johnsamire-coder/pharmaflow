@@ -1,0 +1,18 @@
+{% extends "core/base.html" %}
+{% block title %}خط السير{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h3 class="mb-4">{% if object %}تعديل خط سير{% else %}خط سير جديد{% endif %}</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3"><label class="form-label">اسم خط السير</label>{{ form.route_name }}</div>
+            <div class="mb-3"><label class="form-label">المنطقة</label>{{ form.area }}</div>
+            <div class="mb-3"><label class="form-label">المندوب</label>{{ form.rep }}</div>
+            <div class="form-check mb-3">{{ form.is_active }}<label class="form-check-label">فعال</label></div>
+            <button class="btn btn-primary">حفظ</button>
+            <a href="{% url 'customers:route_list' %}" class="btn btn-light">إلغاء</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
