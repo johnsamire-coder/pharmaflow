@@ -1,0 +1,221 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}مجمل الربح{% endblock %}
+{% block page_title %}تقرير مجمل الربح{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/print.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="print-actions no-print">
+    <h4><i class="fas fa-coins me-2" style="color:#198754;"></i>تقرير مجمل الربح</h4>
+    <a href="/reports/" class="pf-btn pf-btn-secondary pf-btn-sm">
+        <i class="fas fa-arrow-right"></i> رجوع
+    </a>
+    <button onclick="window.print()" class="btn-print">
+        <i class="fas fa-print"></i> طباعة / PDF
+    </button>
+    <a href="/reports/export/gross-profit/?date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}"
+       class="btn-excel">
+        <i class="fas fa-file-excel"></i> تصدير Excel
+    </a>
+</div>
+
+<!-- الفلاتر -->
+<div class="pf-filters mb-4 no-print">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="pf-form-label">من تاريخ</label>
+            <input type="date" name="date_from"
+                   value="{{ date_from|date:'Y-m-d' }}"
+                   class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="pf-form-label">إلى تاريخ</label>
+            <input type="date" name="date_to"
+                   value="{{ date_to|date:'Y-m-d' }}"
+                   class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="pf-btn pf-btn-primary">
+                <i class="fas fa-search"></i> عرض
+            </button>
+            <a href="/reports/gross-profit/" class="pf-btn pf-btn-secondary">
+                <i class="fas fa-redo"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- رأس الطباعة -->
+{% include 'partials/print_header.html' %}
+<div class="print-title">
+    <h2>تقرير مجمل الربح</h2>
+    <span>الفترة من {{ date_from|date:"Y/m/d" }} إلى {{ date_to|date:"Y/m/d" }}</span>
+</div>
+
+<!-- ملخص الأرقام -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي المبيعات</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ sales_total|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning">
+                <i class="fas fa-undo"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">المرتجعات</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ returns_total|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-info">
+            <div class="pf-stat-icon icon-info">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">صافي المبيعات</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ net_sales|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card {% if gross_profit >= 0 %}stat-success{% else %}stat-danger{% endif %}">
+            <div class="pf-stat-icon {% if gross_profit >= 0 %}icon-success{% else %}icon-danger{% endif %}">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">مجمل الربح</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ gross_profit|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ملخص للطباعة -->
+<div class="print-info-grid mb-4">
+    <div class="print-info-item">
+        <span class="label">إجمالي المبيعات:</span>
+        <span class="value">{{ sales_total|floatformat:2 }} ج.م</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">المرتجعات:</span>
+        <span class="value">{{ returns_total|floatformat:2 }} ج.م</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">صافي المبيعات:</span>
+        <span class="value">{{ net_sales|floatformat:2 }} ج.م</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">تكلفة البضاعة المباعة:</span>
+        <span class="value">{{ total_cost|floatformat:2 }} ج.م</span>
+    </div>
+    <div class="print-info-item" style="border-right-color:#2dc653;background:var(--pf-success-light);">
+        <span class="label">مجمل الربح:</span>
+        <span class="value" style="color:{% if gross_profit >= 0 %}var(--pf-success){% else %}var(--pf-danger){% endif %};font-size:16px;">
+            {{ gross_profit|floatformat:2 }} ج.م
+        </span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">ملاحظة:</span>
+        <span class="value" style="font-size:11px;color:#888;">
+            التكلفة من تكلفة الدفعة / سعر الشراء
+        </span>
+    </div>
+</div>
+
+<!-- تفاصيل المنتجات -->
+<div class="pf-card">
+    <div class="pf-card-header no-print">
+        <h6><i class="fas fa-table me-2"></i>ربحية كل منتج</h6>
+        <span class="pf-badge pf-badge-primary">{{ rows|length }} منتج</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table print-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>المنتج</th>
+                    <th>الكمية المباعة</th>
+                    <th>إجمالي المبيعات</th>
+                    <th>إجمالي التكلفة</th>
+                    <th>مجمل الربح</th>
+                    <th>نسبة الربح %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td style="font-weight:700;">{{ row.name }}</td>
+                    <td>{{ row.qty|floatformat:0 }}</td>
+                    <td>{{ row.selling|floatformat:2 }}</td>
+                    <td>{{ row.cost|floatformat:2 }}</td>
+                    <td style="font-weight:700;
+                        color:{% if row.profit >= 0 %}var(--pf-success){% else %}var(--pf-danger){% endif %};">
+                        {{ row.profit|floatformat:2 }}
+                    </td>
+                    <td>
+                        {% if row.selling %}
+                        {% widthratio row.profit row.selling 100 %}%
+                        {% else %}0%{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        لا توجد بيانات مبيعات في هذه الفترة
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">الإجمالي</td>
+                    <td>{{ net_sales|floatformat:2 }}</td>
+                    <td>{{ total_cost|floatformat:2 }}</td>
+                    <td style="font-weight:800;">{{ gross_profit|floatformat:2 }}</td>
+                    <td>
+                        {% if net_sales %}
+                        {% widthratio gross_profit net_sales 100 %}%
+                        {% endif %}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<!-- توقيعات -->
+<div class="print-footer">
+    <div class="signature-box">
+        <div class="signature-line">المحاسب</div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#888;">
+        طُبع في: {% now "Y/m/d H:i" %} | PharmaFlow
+    </div>
+    <div class="signature-box">
+        <div class="signature-line">المدير</div>
+    </div>
+</div>
+{% endblock %}

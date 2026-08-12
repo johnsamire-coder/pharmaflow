@@ -683,3 +683,462 @@ def export_customers_excel(request):
     response['Content-Disposition'] = 'attachment; filename="customers_report.xlsx"'
     wb.save(response)
     return response
+
+
+# ============================================
+# كشف حساب عميل
+# ============================================
+@login_required
+def customer_statement(request):
+    company = request.company
+    date_from, date_to = get_date_range(request)
+    customer_id = request.GET.get('customer', '').strip()
+
+    customers = Customer.objects.filter(
+        company=company,
+        is_active=True
+    ).order_by('pharmacy_name')
+
+    customer = None
+    transactions = []
+    opening_balance = Decimal('0.00')
+    total_debit = Decimal('0.00')
+    total_credit = Decimal('0.00')
+    closing_balance = Decimal('0.00')
+
+    if customer_id:
+        try:
+            customer = Customer.objects.get(pk=customer_id, company=company)
+
+            # رصيد أول المدة
+            sales_before = Invoice.objects.filter(
+                company=company,
+                customer=customer,
+                invoice_date__lt=date_from
+            ).aggregate(
+                t=Coalesce(Sum('total_amount'), Value(0), output_field=DecimalField())
+            )['t'] or Decimal('0.00')
+
+            collections_before = Collection.objects.filter(
+                company=company,
+                customer=customer,
+                collection_date__lt=date_from
+            ).aggregate(
+                t=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+            )['t'] or Decimal('0.00')
+
+            try:
+                returns_before = Return.objects.filter(
+                    company=company,
+                    customer=customer,
+                    return_date__lt=date_from
+                ).aggregate(
+                    t=Coalesce(Sum('total_value'), Value(0), output_field=DecimalField())
+                )['t'] or Decimal('0.00')
+            except Exception:
+                returns_before = Decimal('0.00')
+
+            opening_balance = Decimal(str(sales_before)) - Decimal(str(collections_before)) - Decimal(str(returns_before))
+
+            # فواتير البيع في الفترة
+            invoices = Invoice.objects.filter(
+                company=company,
+                customer=customer,
+                invoice_date__gte=date_from,
+                invoice_date__lte=date_to,
+            ).order_by('invoice_date', 'id')
+
+            for inv in invoices:
+                amt = Decimal(str(inv.total_amount or 0))
+                transactions.append({
+                    'date': inv.invoice_date,
+                    'type': 'invoice',
+                    'type_label': 'فاتورة بيع',
+                    'reference': inv.invoice_number,
+                    'debit': amt,
+                    'credit': Decimal('0.00'),
+                })
+                total_debit += amt
+
+            # التحصيلات في الفترة
+            collections = Collection.objects.filter(
+                company=company,
+                customer=customer,
+                collection_date__gte=date_from,
+                collection_date__lte=date_to,
+            ).order_by('collection_date', 'id')
+
+            for col in collections:
+                amt = Decimal(str(col.amount or 0))
+                transactions.append({
+                    'date': col.collection_date,
+                    'type': 'collection',
+                    'type_label': 'تحصيل',
+                    'reference': col.receipt_number or f'RC-{col.id}',
+                    'debit': Decimal('0.00'),
+                    'credit': amt,
+                })
+                total_credit += amt
+
+            # المرتجعات في الفترة
+            try:
+                returns = Return.objects.filter(
+                    company=company,
+                    customer=customer,
+                    return_date__gte=date_from,
+                    return_date__lte=date_to,
+                ).order_by('return_date', 'id')
+
+                for ret in returns:
+                    amt = Decimal(str(ret.total_value or 0))
+                    transactions.append({
+                        'date': ret.return_date,
+                        'type': 'return',
+                        'type_label': 'مرتجع',
+                        'reference': ret.return_number,
+                        'debit': Decimal('0.00'),
+                        'credit': amt,
+                    })
+                    total_credit += amt
+            except Exception:
+                pass
+
+            # ترتيب حسب التاريخ
+            transactions.sort(key=lambda x: x['date'])
+
+            # حساب الرصيد الجاري
+            running = opening_balance
+            for tx in transactions:
+                running += tx['debit'] - tx['credit']
+                tx['balance'] = running
+
+            closing_balance = running
+
+        except Customer.DoesNotExist:
+            customer_id = ''
+
+    company_info = get_company_info(company)
+
+    return render(request, 'reports/customer_statement.html', {
+        'company_info': company_info,
+        'customers': customers,
+        'customer': customer,
+        'transactions': transactions,
+        'opening_balance': opening_balance,
+        'total_debit': total_debit,
+        'total_credit': total_credit,
+        'closing_balance': closing_balance,
+        'date_from': date_from,
+        'date_to': date_to,
+        'selected_customer': customer_id,
+    })
+
+
+@login_required
+def export_customer_statement_excel(request):
+    company = request.company
+    date_from, date_to = get_date_range(request)
+    customer_id = request.GET.get('customer', '').strip()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'كشف حساب'
+
+    company_info = get_company_info(company)
+
+    customer_name = 'عميل'
+    try:
+        customer = Customer.objects.get(pk=customer_id, company=company)
+        customer_name = customer.pharmacy_name
+
+        sales_before = Invoice.objects.filter(
+            company=company, customer=customer,
+            invoice_date__lt=date_from
+        ).aggregate(
+            t=Coalesce(Sum('total_amount'), Value(0), output_field=DecimalField())
+        )['t'] or Decimal('0.00')
+
+        collections_before = Collection.objects.filter(
+            company=company, customer=customer,
+            collection_date__lt=date_from
+        ).aggregate(
+            t=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+        )['t'] or Decimal('0.00')
+
+        opening_balance = Decimal(str(sales_before)) - Decimal(str(collections_before))
+
+        data_start = excel_header_style(
+            ws, company_info,
+            f'كشف حساب: {customer_name} | {date_from} إلى {date_to}',
+            company
+        )
+
+        headers = ['#', 'التاريخ', 'البيان', 'المرجع', 'مدين', 'دائن', 'الرصيد']
+        style_header_row(ws, data_start, headers)
+
+        row_num = data_start + 1
+
+        # رصيد أول المدة
+        style_data_row(ws, row_num, [
+            '', str(date_from), 'رصيد أول المدة', '',
+            float(opening_balance) if opening_balance > 0 else 0,
+            float(abs(opening_balance)) if opening_balance < 0 else 0,
+            float(opening_balance)
+        ], False)
+        row_num += 1
+
+        transactions = []
+
+        for inv in Invoice.objects.filter(
+            company=company, customer=customer,
+            invoice_date__gte=date_from, invoice_date__lte=date_to
+        ).order_by('invoice_date'):
+            transactions.append({
+                'date': inv.invoice_date,
+                'label': 'فاتورة بيع',
+                'ref': inv.invoice_number,
+                'debit': Decimal(str(inv.total_amount or 0)),
+                'credit': Decimal('0.00'),
+            })
+
+        for col in Collection.objects.filter(
+            company=company, customer=customer,
+            collection_date__gte=date_from, collection_date__lte=date_to
+        ).order_by('collection_date'):
+            transactions.append({
+                'date': col.collection_date,
+                'label': 'تحصيل',
+                'ref': col.receipt_number or f'RC-{col.id}',
+                'debit': Decimal('0.00'),
+                'credit': Decimal(str(col.amount or 0)),
+            })
+
+        transactions.sort(key=lambda x: x['date'])
+        running = opening_balance
+
+        for i, tx in enumerate(transactions, 1):
+            running += tx['debit'] - tx['credit']
+            style_data_row(ws, row_num, [
+                i,
+                str(tx['date']),
+                tx['label'],
+                tx['ref'],
+                float(tx['debit']),
+                float(tx['credit']),
+                float(running),
+            ], i % 2 == 0)
+            row_num += 1
+
+        # إجمالي
+        ws.merge_cells(f'A{row_num}:D{row_num}')
+        ws[f'A{row_num}'] = 'الرصيد الختامي'
+
+    except Exception:
+        data_start = excel_header_style(ws, company_info, 'كشف حساب', company)
+        style_header_row(ws, data_start, ['لم يتم اختيار عميل'])
+
+    col_widths = [5, 14, 20, 20, 14, 14, 14]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="statement_{customer_id}_{date_from}_{date_to}.xlsx"'
+    wb.save(response)
+    return response
+
+
+# ============================================
+# مجمل الربح
+# ============================================
+@login_required
+def gross_profit_report(request):
+    company = request.company
+    date_from, date_to = get_date_range(request)
+
+    # إجمالي المبيعات
+    sales_total = Invoice.objects.filter(
+        company=company,
+        invoice_date__gte=date_from,
+        invoice_date__lte=date_to,
+    ).aggregate(
+        t=Coalesce(Sum('total_amount'), Value(0), output_field=DecimalField())
+    )['t'] or Decimal('0.00')
+
+    # إجمالي المرتجعات
+    try:
+        returns_total = Return.objects.filter(
+            company=company,
+            return_date__gte=date_from,
+            return_date__lte=date_to,
+        ).aggregate(
+            t=Coalesce(Sum('total_value'), Value(0), output_field=DecimalField())
+        )['t'] or Decimal('0.00')
+    except Exception:
+        returns_total = Decimal('0.00')
+
+    net_sales = Decimal(str(sales_total)) - Decimal(str(returns_total))
+
+    # تكلفة البضاعة المباعة من بنود الفاتورة
+    item_fields = [f.name for f in InvoiceItem._meta.fields]
+    item_qs = InvoiceItem.objects.filter(
+        invoice__company=company,
+        invoice__invoice_date__gte=date_from,
+        invoice__invoice_date__lte=date_to,
+    ).select_related('product', 'batch')
+
+    if 'is_bonus' in item_fields:
+        item_qs = item_qs.filter(is_bonus=False)
+
+    total_cost = Decimal('0.00')
+    product_rows = {}
+
+    for item in item_qs:
+        qty = Decimal(str(item.quantity or 0))
+        selling = Decimal(str(getattr(item, 'line_total', 0) or 0))
+
+        # جيب التكلفة من الدفعة أو المنتج
+        unit_cost = Decimal('0.00')
+        if item.batch and getattr(item.batch, 'unit_cost', None):
+            unit_cost = Decimal(str(item.batch.unit_cost))
+        elif item.product and getattr(item.product, 'purchase_price', None):
+            unit_cost = Decimal(str(item.product.purchase_price))
+
+        line_cost = qty * unit_cost
+        line_profit = selling - line_cost
+        total_cost += line_cost
+
+        pname = item.product.product_name if item.product else 'غير محدد'
+        if pname not in product_rows:
+            product_rows[pname] = {
+                'name': pname,
+                'qty': Decimal('0.00'),
+                'selling': Decimal('0.00'),
+                'cost': Decimal('0.00'),
+                'profit': Decimal('0.00'),
+            }
+        product_rows[pname]['qty'] += qty
+        product_rows[pname]['selling'] += selling
+        product_rows[pname]['cost'] += line_cost
+        product_rows[pname]['profit'] += line_profit
+
+    gross_profit = net_sales - total_cost
+
+    rows = sorted(product_rows.values(), key=lambda x: x['profit'], reverse=True)
+
+    company_info = get_company_info(company)
+
+    return render(request, 'reports/gross_profit_report.html', {
+        'company_info': company_info,
+        'date_from': date_from,
+        'date_to': date_to,
+        'sales_total': sales_total,
+        'returns_total': returns_total,
+        'net_sales': net_sales,
+        'total_cost': total_cost,
+        'gross_profit': gross_profit,
+        'rows': rows,
+    })
+
+
+@login_required
+def export_gross_profit_excel(request):
+    company = request.company
+    date_from, date_to = get_date_range(request)
+
+    sales_total = Invoice.objects.filter(
+        company=company,
+        invoice_date__gte=date_from,
+        invoice_date__lte=date_to,
+    ).aggregate(
+        t=Coalesce(Sum('total_amount'), Value(0), output_field=DecimalField())
+    )['t'] or Decimal('0.00')
+
+    try:
+        returns_total = Return.objects.filter(
+            company=company,
+            return_date__gte=date_from,
+            return_date__lte=date_to,
+        ).aggregate(
+            t=Coalesce(Sum('total_value'), Value(0), output_field=DecimalField())
+        )['t'] or Decimal('0.00')
+    except Exception:
+        returns_total = Decimal('0.00')
+
+    net_sales = Decimal(str(sales_total)) - Decimal(str(returns_total))
+
+    item_fields = [f.name for f in InvoiceItem._meta.fields]
+    item_qs = InvoiceItem.objects.filter(
+        invoice__company=company,
+        invoice__invoice_date__gte=date_from,
+        invoice__invoice_date__lte=date_to,
+    ).select_related('product', 'batch')
+
+    if 'is_bonus' in item_fields:
+        item_qs = item_qs.filter(is_bonus=False)
+
+    total_cost = Decimal('0.00')
+    product_rows = {}
+
+    for item in item_qs:
+        qty = Decimal(str(item.quantity or 0))
+        selling = Decimal(str(getattr(item, 'line_total', 0) or 0))
+        unit_cost = Decimal('0.00')
+        if item.batch and getattr(item.batch, 'unit_cost', None):
+            unit_cost = Decimal(str(item.batch.unit_cost))
+        elif item.product and getattr(item.product, 'purchase_price', None):
+            unit_cost = Decimal(str(item.product.purchase_price))
+        line_cost = qty * unit_cost
+        total_cost += line_cost
+        pname = item.product.product_name if item.product else 'غير محدد'
+        if pname not in product_rows:
+            product_rows[pname] = {'name': pname, 'qty': Decimal('0.00'), 'selling': Decimal('0.00'), 'cost': Decimal('0.00'), 'profit': Decimal('0.00')}
+        product_rows[pname]['qty'] += qty
+        product_rows[pname]['selling'] += selling
+        product_rows[pname]['cost'] += line_cost
+        product_rows[pname]['profit'] += (selling - line_cost)
+
+    gross_profit = net_sales - total_cost
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'مجمل الربح'
+
+    company_info = get_company_info(company)
+    data_start = excel_header_style(
+        ws, company_info,
+        f'تقرير مجمل الربح | {date_from} إلى {date_to}',
+        company
+    )
+
+    # ملخص
+    summary_start = data_start
+    style_header_row(ws, summary_start, ['البند', 'المبلغ'])
+    for i, row in enumerate([
+        ['إجمالي المبيعات', float(sales_total)],
+        ['المرتجعات', float(returns_total)],
+        ['صافي المبيعات', float(net_sales)],
+        ['تكلفة البضاعة المباعة', float(total_cost)],
+        ['مجمل الربح', float(gross_profit)],
+    ], 1):
+        style_data_row(ws, summary_start + i, row, i % 2 == 0)
+
+    # تفاصيل المنتجات
+    detail_start = summary_start + 8
+    style_header_row(ws, detail_start, ['#', 'المنتج', 'الكمية', 'المبيعات', 'التكلفة', 'الربح'])
+    for i, row in enumerate(sorted(product_rows.values(), key=lambda x: x['profit'], reverse=True), 1):
+        style_data_row(ws, detail_start + i, [
+            i, row['name'], float(row['qty']),
+            float(row['selling']), float(row['cost']), float(row['profit'])
+        ], i % 2 == 0)
+
+    for col, w in {'A': 6, 'B': 30, 'C': 12, 'D': 15, 'E': 15, 'F': 15}.items():
+        ws.column_dimensions[col].width = w
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="gross_profit_{date_from}_{date_to}.xlsx"'
+    wb.save(response)
+    return response

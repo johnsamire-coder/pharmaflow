@@ -1,0 +1,269 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}كشف حساب عميل{% endblock %}
+{% block page_title %}كشف حساب عميل{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/print.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- أزرار الطباعة والتصدير -->
+<div class="print-actions no-print">
+    <h4><i class="fas fa-file-invoice-dollar me-2" style="color:#7209b7;"></i>كشف حساب عميل</h4>
+    <a href="/reports/" class="pf-btn pf-btn-secondary pf-btn-sm">
+        <i class="fas fa-arrow-right"></i> رجوع
+    </a>
+    {% if customer %}
+    <button onclick="window.print()" class="btn-print">
+        <i class="fas fa-print"></i> طباعة / PDF
+    </button>
+    <a href="/reports/export/customer-statement/?customer={{ customer.pk }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}"
+       class="btn-excel">
+        <i class="fas fa-file-excel"></i> تصدير Excel
+    </a>
+    {% endif %}
+</div>
+
+<!-- الفلاتر -->
+<div class="pf-filters mb-4 no-print">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="pf-form-label">العميل <span class="required">*</span></label>
+            <select name="customer" class="pf-form-select" required>
+                <option value="">-- اختر العميل --</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}"
+                    {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.pharmacy_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="pf-form-label">من تاريخ</label>
+            <input type="date" name="date_from"
+                   value="{{ date_from|date:'Y-m-d' }}"
+                   class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="pf-form-label">إلى تاريخ</label>
+            <input type="date" name="date_to"
+                   value="{{ date_to|date:'Y-m-d' }}"
+                   class="pf-form-control">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="pf-btn pf-btn-primary" style="width:100%;">
+                <i class="fas fa-search"></i> عرض
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if customer %}
+
+<!-- رأس الطباعة -->
+{% include 'partials/print_header.html' %}
+
+<div class="print-title">
+    <h2>كشف حساب عميل</h2>
+    <span>
+        {{ customer.pharmacy_name }}
+        &nbsp;|&nbsp;
+        الفترة من {{ date_from|date:"Y/m/d" }} إلى {{ date_to|date:"Y/m/d" }}
+    </span>
+</div>
+
+<!-- بيانات العميل -->
+<div class="print-info-grid mb-4">
+    <div class="print-info-item">
+        <span class="label">اسم العميل:</span>
+        <span class="value">{{ customer.pharmacy_name }}</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">الهاتف:</span>
+        <span class="value">{{ customer.phone|default:"-" }}</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">المنطقة:</span>
+        <span class="value">{{ customer.area|default:"-" }}</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">حد الائتمان:</span>
+        <span class="value">{{ customer.credit_limit|floatformat:2 }} ج.م</span>
+    </div>
+</div>
+
+<!-- ملخص الأرقام -->
+<div class="row g-3 mb-4 no-print">
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-secondary">
+            <div class="pf-stat-icon icon-info">
+                <i class="fas fa-history"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">رصيد أول المدة</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ opening_balance|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي الفواتير</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ total_debit|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي السداد</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ total_credit|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card {% if closing_balance > 0 %}stat-danger{% else %}stat-success{% endif %}">
+            <div class="pf-stat-icon {% if closing_balance > 0 %}icon-danger{% else %}icon-success{% endif %}">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">الرصيد الختامي</div>
+                <div class="pf-stat-value" style="font-size:18px;">
+                    {{ closing_balance|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول الحركات -->
+<div class="pf-card">
+    <div class="pf-card-header no-print">
+        <h6><i class="fas fa-list me-2"></i>حركة الحساب</h6>
+        <span class="pf-badge pf-badge-primary">{{ transactions|length }} حركة</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table print-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>التاريخ</th>
+                    <th>البيان</th>
+                    <th>المرجع</th>
+                    <th>مدين (عليه)</th>
+                    <th>دائن (له)</th>
+                    <th>الرصيد</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- رصيد أول المدة -->
+                <tr style="background:#f0f4ff;font-weight:700;">
+                    <td>-</td>
+                    <td>{{ date_from|date:"Y/m/d" }}</td>
+                    <td>رصيد أول المدة</td>
+                    <td>-</td>
+                    <td>
+                        {% if opening_balance > 0 %}
+                        {{ opening_balance|floatformat:2 }}
+                        {% else %}0.00{% endif %}
+                    </td>
+                    <td>
+                        {% if opening_balance < 0 %}
+                        {{ opening_balance|floatformat:2 }}
+                        {% else %}0.00{% endif %}
+                    </td>
+                    <td style="font-weight:800;">{{ opening_balance|floatformat:2 }}</td>
+                </tr>
+
+                {% for tx in transactions %}
+                <tr>
+                    <td style="color:#aaa;">{{ forloop.counter }}</td>
+                    <td>{{ tx.date|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if tx.type == 'invoice' %}
+                        <span class="pf-badge pf-badge-primary">{{ tx.type_label }}</span>
+                        {% elif tx.type == 'collection' %}
+                        <span class="pf-badge pf-badge-success">{{ tx.type_label }}</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-warning">{{ tx.type_label }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;">{{ tx.reference }}</td>
+                    <td style="color:var(--pf-danger);font-weight:600;">
+                        {% if tx.debit %}{{ tx.debit|floatformat:2 }}{% else %}—{% endif %}
+                    </td>
+                    <td style="color:var(--pf-success);font-weight:600;">
+                        {% if tx.credit %}{{ tx.credit|floatformat:2 }}{% else %}—{% endif %}
+                    </td>
+                    <td style="font-weight:700;
+                        color:{% if tx.balance > 0 %}var(--pf-danger){% elif tx.balance < 0 %}var(--pf-success){% else %}#333{% endif %};">
+                        {{ tx.balance|floatformat:2 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        لا توجد حركة خلال هذه الفترة
+                    </td>
+                </tr>
+                {% endfor %}
+
+                <!-- الإجمالي -->
+                <tr style="background:#1a1d3a;color:white;font-weight:800;">
+                    <td colspan="4" style="text-align:center;">الرصيد الختامي</td>
+                    <td>{{ total_debit|floatformat:2 }}</td>
+                    <td>{{ total_credit|floatformat:2 }}</td>
+                    <td>{{ closing_balance|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- توقيعات للطباعة -->
+<div class="print-footer">
+    <div class="signature-box">
+        <div class="signature-line">المحاسب</div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#888;">
+        طُبع في: {% now "Y/m/d H:i" %} | PharmaFlow
+    </div>
+    <div class="signature-box">
+        <div class="signature-line">المدير</div>
+    </div>
+</div>
+
+{% else %}
+
+<!-- لو مفيش عميل محدد -->
+<div class="pf-card">
+    <div class="pf-card-body">
+        <div class="pf-empty">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <h5>اختر العميل والفترة الزمنية</h5>
+            <p>
+                اختر اسم العميل وحدد الفترة من تاريخ إلى تاريخ،
+                <br>
+                وهيظهرلك كشف حساب كامل بكل الفواتير والتحصيلات والرصيد.
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
