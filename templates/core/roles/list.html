@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+{% block title %}إدارة الأدوار{% endblock %}
+{% block page_title %}إدارة الأدوار والصلاحيات{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-shield-halved me-2"></i>الأدوار والصلاحيات</h2>
+</div>
+
+<!-- الأدوار المتاحة -->
+<div class="row g-3 mb-4">
+    {% for role_key, role in roles.items %}
+    <div class="col-md-4 col-sm-6">
+        <a href="/roles/{{ role_key }}/" style="text-decoration:none;">
+            <div class="pf-card" style="border-right:4px solid var(--pf-{{ role.color }});cursor:pointer;transition:all 0.3s;">
+                <div class="pf-card-body">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <div style="width:44px;height:44px;border-radius:12px;background:var(--pf-{{ role.color }}-light, #f0f1f3);display:flex;align-items:center;justify-content:center;font-size:20px;">
+                            {% if role_key == 'admin' %}<i class="fas fa-crown" style="color:#ef233c;"></i>
+                            {% elif role_key == 'sales_manager' %}<i class="fas fa-chart-line" style="color:#4361ee;"></i>
+                            {% elif role_key == 'sales_rep' %}<i class="fas fa-user-tie" style="color:#2dc653;"></i>
+                            {% elif role_key == 'warehouse' %}<i class="fas fa-warehouse" style="color:#f0a500;"></i>
+                            {% elif role_key == 'accountant' %}<i class="fas fa-calculator" style="color:#4cc9f0;"></i>
+                            {% else %}<i class="fas fa-eye" style="color:#888;"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div style="font-weight:800;font-size:15px;color:#333;">{{ role.label }}</div>
+                            <div style="font-size:12px;color:#888;">{{ role.permissions|length }} صلاحية</div>
+                        </div>
+                    </div>
+                    <p style="font-size:13px;color:#666;margin:0;">{{ role.description }}</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- المستخدمون وأدوارهم -->
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-users me-2"></i>المستخدمون وأدوارهم</h6>
+        <span class="pf-badge pf-badge-primary">{{ profiles|length }} مستخدم</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>المستخدم</th>
+                    <th>الاسم الكامل</th>
+                    <th>الدور</th>
+                    <th>الهاتف</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in profiles %}
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--pf-primary),#7209b7);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">
+                                {{ profile.user.first_name|truncatechars:1 }}{{ profile.user.last_name|truncatechars:1 }}
+                            </div>
+                            <div style="font-weight:700;">{{ profile.user.username }}</div>
+                        </div>
+                    </td>
+                    <td>{{ profile.user.get_full_name|default:"-" }}</td>
+                    <td>
+                        <span class="pf-badge pf-badge-{% if profile.role == 'admin' %}danger{% elif profile.role == 'sales_manager' %}primary{% elif profile.role == 'sales_rep' %}success{% elif profile.role == 'warehouse' %}warning{% elif profile.role == 'accountant' %}info{% else %}secondary{% endif %}">
+                            {{ profile.get_role_display }}
+                        </span>
+                    </td>
+                    <td style="color:#888;font-size:13px;">{{ profile.phone|default:"-" }}</td>
+                    <td>
+                        <a href="/roles/assign/{{ profile.user.pk }}/" class="pf-btn-icon" title="تعديل الدور">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="pf-empty">
+                            <i class="fas fa-users"></i>
+                            <h5>لا يوجد مستخدمون</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% for user in users_without_profile %}
+                <tr style="background:#fffbf0;">
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;background:#eee;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#888;font-weight:700;font-size:13px;">
+                                {{ user.first_name|truncatechars:1 }}{{ user.last_name|truncatechars:1 }}
+                            </div>
+                            <div style="font-weight:700;">{{ user.username }}</div>
+                        </div>
+                    </td>
+                    <td>{{ user.get_full_name|default:"-" }}</td>
+                    <td><span class="pf-badge pf-badge-secondary">بدون دور</span></td>
+                    <td>-</td>
+                    <td>
+                        <a href="/roles/assign/{{ user.pk }}/" class="pf-btn pf-btn-sm pf-btn-primary">
+                            <i class="fas fa-plus me-1"></i>تعيين دور
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

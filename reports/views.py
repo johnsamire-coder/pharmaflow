@@ -1,15 +1,27 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, F
 from django.utils import timezone
 from datetime import date, timedelta
 
-from sales.models import Invoice, InvoiceItem, SalesOrder
+from sales.models import Invoice, InvoiceItem
 from customer_collections.models import Collection
-from inventory.models import Inventory, Batch, InventoryMovement
+from inventory.models import Batch
 from customers.models import Customer
 from products.models import Product
 from returns.models import Return
+
+try:
+    from consignments.models import Consignment, ConsignmentItem
+    HAS_CONSIGNMENTS = True
+except ImportError:
+    HAS_CONSIGNMENTS = False
+
+try:
+    from manufacturing.models import ManufacturingOrder, Factory
+    HAS_MANUFACTURING = True
+except ImportError:
+    HAS_MANUFACTURING = False
 
 
 def get_date_range(request):
@@ -27,7 +39,13 @@ def get_date_range(request):
 
 @login_required
 def reports_home(request):
-    return render(request, 'reports/home.html', {})
+    return render(request, 'reports/index.html', {})
+
+
+# alias
+@login_required
+def index(request):
+    return reports_home(request)
 
 
 @login_required
@@ -36,52 +54,51 @@ def sales_report(request):
     date_from, date_to = get_date_range(request)
 
     customer_id = request.GET.get('customer', '').strip()
-    product_id = request.GET.get('product', '').strip()
-    rep_id = request.GET.get('rep', '').strip()
 
     invoices = Invoice.objects.filter(
         company=company,
         invoice_date__gte=date_from,
         invoice_date__lte=date_to,
-    ).select_related('customer', 'rep')
+    ).select_related('customer')
 
     if customer_id:
         invoices = invoices.filter(customer_id=customer_id)
-    if rep_id:
-        invoices = invoices.filter(rep_id=rep_id)
 
     totals = invoices.aggregate(
         total_sales=Sum('total_amount'),
-        total_tax=Sum('tax_amount'),
-        total_paid=Sum('amount_paid'),
-        total_due=Sum('amount_due'),
+        total_paid=Sum('paid_amount'),
+        total_due=Sum('remaining_amount'),
         count=Count('id'),
     )
 
+    # by customer
     by_customer = invoices.values(
-        'customer__pharmacy_name'
+        'customer__customer_name'
     ).annotate(
         total=Sum('total_amount'),
         count=Count('id'),
-        paid=Sum('amount_paid'),
-        due=Sum('amount_due'),
+        paid=Sum('paid_amount'),
+        due=Sum('remaining_amount'),
     ).order_by('-total')[:20]
 
-    by_product = InvoiceItem.objects.filter(
-        invoice__company=company,
-        invoice__invoice_date__gte=date_from,
-        invoice__invoice_date__lte=date_to,
-        is_bonus=False,
-    ).values(
-        'product__product_name',
-        'product__product_code',
-    ).annotate(
-        total_qty=Sum('quantity'),
-        total_value=Sum('line_total'),
-    ).order_by('-total_value')[:20]
+    # by product
+    try:
+        by_product = InvoiceItem.objects.filter(
+            invoice__company=company,
+            invoice__invoice_date__gte=date_from,
+            invoice__invoice_date__lte=date_to,
+        ).values(
+            'product__product_name',
+        ).annotate(
+            total_qty=Sum('quantity'),
+            total_value=Sum('line_total'),
+        ).order_by('-total_value')[:20]
+    except Exception:
+        by_product = []
 
-    customers = Customer.objects.filter(company=company, is_active=True).order_by('pharmacy_name')
-    reps = company.users.filter(is_active=True).order_by('full_name', 'username')
+    customers = Customer.objects.filter(
+        company=company, is_active=True
+    ).order_by('customer_name')
 
     return render(request, 'reports/sales_report.html', {
         'invoices': invoices.order_by('-invoice_date')[:50],
@@ -89,11 +106,9 @@ def sales_report(request):
         'by_customer': by_customer,
         'by_product': by_product,
         'customers': customers,
-        'reps': reps,
         'date_from': date_from,
         'date_to': date_to,
         'selected_customer': customer_id,
-        'selected_rep': rep_id,
     })
 
 
@@ -104,28 +119,22 @@ def collections_report(request):
 
     customer_id = request.GET.get('customer', '').strip()
     method = request.GET.get('method', '').strip()
-    status = request.GET.get('status', '').strip()
 
     collections = Collection.objects.filter(
         company=company,
         collection_date__gte=date_from,
         collection_date__lte=date_to,
-    ).select_related('customer', 'collected_by')
+    ).select_related('customer')
 
     if customer_id:
         collections = collections.filter(customer_id=customer_id)
     if method:
         collections = collections.filter(payment_method=method)
-    if status:
-        collections = collections.filter(status=status)
 
     totals = collections.aggregate(
         total=Sum('amount'),
         count=Count('id'),
     )
-
-    confirmed_total = collections.filter(status='confirmed').aggregate(total=Sum('amount'))['total'] or 0
-    pending_total = collections.filter(status__in=['pending', 'pending_clearance']).aggregate(total=Sum('amount'))['total'] or 0
 
     by_method = collections.values('payment_method').annotate(
         total=Sum('amount'),
@@ -133,170 +142,229 @@ def collections_report(request):
     ).order_by('-total')
 
     by_customer = collections.values(
-        'customer__pharmacy_name'
+        'customer__customer_name'
     ).annotate(
         total=Sum('amount'),
         count=Count('id'),
     ).order_by('-total')[:20]
 
-    customers = Customer.objects.filter(company=company, is_active=True).order_by('pharmacy_name')
+    customers = Customer.objects.filter(
+        company=company, is_active=True
+    ).order_by('customer_name')
 
     return render(request, 'reports/collections_report.html', {
         'collections': collections.order_by('-collection_date')[:50],
         'totals': totals,
-        'confirmed_total': confirmed_total,
-        'pending_total': pending_total,
         'by_method': by_method,
         'by_customer': by_customer,
         'customers': customers,
-        'method_choices': Collection.PAYMENT_METHOD_CHOICES,
-        'status_choices': Collection.STATUS_CHOICES,
         'date_from': date_from,
         'date_to': date_to,
         'selected_customer': customer_id,
         'selected_method': method,
-        'selected_status': status,
     })
 
 
 @login_required
 def inventory_report(request):
     company = request.company
+    today = timezone.localdate()
 
     product_id = request.GET.get('product', '').strip()
-    warehouse_id = request.GET.get('warehouse', '').strip()
     stock_filter = request.GET.get('stock_filter', '').strip()
 
-    inventory_rows = Inventory.objects.filter(
+    batches = Batch.objects.filter(
         company=company,
-    ).select_related('product', 'batch', 'warehouse')
+        status='available',
+    ).select_related('product').order_by(
+        'product__product_name', 'expiry_date'
+    )
 
     if product_id:
-        inventory_rows = inventory_rows.filter(product_id=product_id)
-    if warehouse_id:
-        inventory_rows = inventory_rows.filter(warehouse_id=warehouse_id)
+        batches = batches.filter(product_id=product_id)
 
-    rows_list = list(inventory_rows.order_by('product__product_name', 'batch__expiry_date'))
+    if stock_filter == 'near_expiry':
+        warning_date = today + timedelta(days=30)
+        batches = batches.filter(
+            expiry_date__gte=today,
+            expiry_date__lte=warning_date
+        )
+    elif stock_filter == 'expired':
+        batches = batches.filter(expiry_date__lt=today)
 
-    if stock_filter == 'low':
-        rows_list = [r for r in rows_list if r.quantity_available <= r.product.min_stock_level]
-    elif stock_filter == 'near_expiry':
-        warning_date = timezone.localdate() + timedelta(days=90)
-        rows_list = [r for r in rows_list if r.batch.expiry_date <= warning_date]
+    total_available = batches.aggregate(
+        t=Sum('quantity_available')
+    )['t'] or 0
 
-    total_available = sum(r.quantity_available for r in rows_list)
+    expiring_count = Batch.objects.filter(
+        company=company,
+        status='available',
+        expiry_date__gte=today,
+        expiry_date__lte=today + timedelta(days=30)
+    ).count()
 
-    products = Product.objects.filter(company=company, is_active=True).order_by('product_name')
-    from inventory.models import Warehouse
-    warehouses = Warehouse.objects.filter(company=company, is_active=True).order_by('warehouse_name')
+    expired_count = Batch.objects.filter(
+        company=company,
+        expiry_date__lt=today
+    ).count()
+
+    products = Product.objects.filter(
+        company=company, is_active=True
+    ).order_by('product_name')
 
     return render(request, 'reports/inventory_report.html', {
-        'rows': rows_list,
+        'batches': batches[:100],
         'total_available': total_available,
+        'expiring_count': expiring_count,
+        'expired_count': expired_count,
         'products': products,
-        'warehouses': warehouses,
-        'date_today': timezone.localdate(),
+        'date_today': today,
         'selected_product': product_id,
-        'selected_warehouse': warehouse_id,
         'selected_stock_filter': stock_filter,
     })
 
 
 @login_required
-def aging_report(request):
+def customer_report(request):
     company = request.company
     today = timezone.localdate()
 
-    invoices = Invoice.objects.filter(
+    search = request.GET.get('search', '').strip()
+    area = request.GET.get('area', '').strip()
+
+    customers = Customer.objects.filter(
         company=company,
-        status__in=['issued', 'partially_paid'],
-        amount_due__gt=0,
-    ).select_related('customer', 'rep').order_by('customer__pharmacy_name', 'due_date')
+        is_active=True
+    ).order_by('customer_name')
 
-    buckets = {
-        'current': {'label': 'جاري (لم يستحق)', 'invoices': [], 'total': 0},
-        '1_30': {'label': '1 - 30 يوم', 'invoices': [], 'total': 0},
-        '31_60': {'label': '31 - 60 يوم', 'invoices': [], 'total': 0},
-        '61_90': {'label': '61 - 90 يوم', 'invoices': [], 'total': 0},
-        'over_90': {'label': 'أكثر من 90 يوم', 'invoices': [], 'total': 0},
-    }
+    if search:
+        customers = customers.filter(
+            Q(customer_name__icontains=search) |
+            Q(phone__icontains=search)
+        )
+    if area:
+        customers = customers.filter(area__icontains=area)
 
-    customer_summary = {}
+    # حساب إجمالي المديونيات
+    total_balance = customers.aggregate(
+        t=Sum('current_balance')
+    )['t'] or 0
 
-    for inv in invoices:
-        if inv.due_date and inv.due_date < today:
-            days_overdue = (today - inv.due_date).days
-        else:
-            days_overdue = 0
+    over_limit = customers.filter(
+        current_balance__gt=F('credit_limit')
+    ).count()
 
-        if days_overdue == 0:
-            bucket_key = 'current'
-        elif days_overdue <= 30:
-            bucket_key = '1_30'
-        elif days_overdue <= 60:
-            bucket_key = '31_60'
-        elif days_overdue <= 90:
-            bucket_key = '61_90'
-        else:
-            bucket_key = 'over_90'
+    areas = customers.values_list(
+        'area', flat=True
+    ).distinct().exclude(area__isnull=True).exclude(area='')
 
-        inv.days_overdue = days_overdue
-        inv.bucket_key = bucket_key
-        buckets[bucket_key]['invoices'].append(inv)
-        buckets[bucket_key]['total'] += float(inv.amount_due)
-
-        cname = inv.customer.pharmacy_name
-        if cname not in customer_summary:
-            customer_summary[cname] = {
-                'customer': inv.customer,
-                'current': 0, '1_30': 0, '31_60': 0, '61_90': 0, 'over_90': 0,
-                'total': 0,
-            }
-        customer_summary[cname][bucket_key] += float(inv.amount_due)
-        customer_summary[cname]['total'] += float(inv.amount_due)
-
-    grand_total = sum(b['total'] for b in buckets.values())
-
-    return render(request, 'reports/aging_report.html', {
-        'buckets': buckets,
-        'customer_summary': sorted(customer_summary.values(), key=lambda x: x['total'], reverse=True),
-        'grand_total': grand_total,
+    return render(request, 'reports/customer_report.html', {
+        'customers': customers[:100],
+        'total_balance': total_balance,
+        'over_limit': over_limit,
+        'areas': areas,
+        'search': search,
+        'selected_area': area,
         'today': today,
     })
 
 
 @login_required
-def customer_statement_print(request, customer_id):
+def consignments_report(request):
+    if not HAS_CONSIGNMENTS:
+        from django.contrib import messages
+        messages.warning(request, 'وحدة التصريف غير مفعلة')
+        return render(request, 'reports/index.html', {})
+
     company = request.company
-    customer = get_object_or_404(Customer, pk=customer_id, company=company)
     date_from, date_to = get_date_range(request)
 
-    invoices = Invoice.objects.filter(
+    status_filter = request.GET.get('status', '').strip()
+    customer_id = request.GET.get('customer', '').strip()
+
+    consignments = Consignment.objects.filter(
         company=company,
-        customer=customer,
-        invoice_date__gte=date_from,
-        invoice_date__lte=date_to,
-    ).order_by('invoice_date')
+        sent_date__gte=date_from,
+        sent_date__lte=date_to,
+    ).select_related('customer').prefetch_related('items')
 
-    collections = Collection.objects.filter(
-        company=company,
-        customer=customer,
-        collection_date__gte=date_from,
-        collection_date__lte=date_to,
-        status__in=['confirmed', 'pending', 'pending_clearance']
-    ).order_by('collection_date')
+    if status_filter:
+        consignments = consignments.filter(status=status_filter)
+    if customer_id:
+        consignments = consignments.filter(customer_id=customer_id)
 
-    balance = customer.get_balance_summary()
+    # إحصائيات
+    total_sent_value = sum(c.total_sent_value for c in consignments)
+    total_sold_value = sum(c.total_sold_value for c in consignments)
+    total_returned_value = sum(c.total_returned_value for c in consignments)
 
-    from core.models import CompanyInfo
-    company_info = CompanyInfo.objects.filter(company=company).first()
+    customers = Customer.objects.filter(
+        company=company, is_active=True
+    ).order_by('customer_name')
 
-    return render(request, 'reports/customer_statement_print.html', {
-        'customer': customer,
-        'invoices': invoices,
-        'collections': collections,
-        'balance': balance,
-        'company_info': company_info,
+    return render(request, 'reports/consignments_report.html', {
+        'consignments': consignments,
+        'total_sent_value': total_sent_value,
+        'total_sold_value': total_sold_value,
+        'total_returned_value': total_returned_value,
+        'customers': customers,
+        'status_choices': Consignment.STATUS_CHOICES,
         'date_from': date_from,
         'date_to': date_to,
+        'selected_status': status_filter,
+        'selected_customer': customer_id,
+    })
+
+
+@login_required
+def manufacturing_report(request):
+    if not HAS_MANUFACTURING:
+        from django.contrib import messages
+        messages.warning(request, 'وحدة التصنيع غير مفعلة')
+        return render(request, 'reports/index.html', {})
+
+    company = request.company
+    date_from, date_to = get_date_range(request)
+
+    status_filter = request.GET.get('status', '').strip()
+    factory_id = request.GET.get('factory', '').strip()
+
+    orders = ManufacturingOrder.objects.filter(
+        company=company,
+    ).select_related('factory', 'product')
+
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+    if factory_id:
+        orders = orders.filter(factory_id=factory_id)
+
+    # إحصائيات
+    total_orders = orders.count()
+    completed = orders.filter(status='completed').count()
+    in_progress = orders.filter(status='in_progress').count()
+    pending = orders.filter(status='pending').count()
+
+    total_cost = orders.aggregate(
+        t=Sum('total_cost')
+    )['t'] or 0
+
+    factories = Factory.objects.filter(
+        company=company
+    ).order_by('factory_name')
+
+    status_choices = ManufacturingOrder.STATUS_CHOICES
+
+    return render(request, 'reports/manufacturing_report.html', {
+        'orders': orders.order_by('-id')[:100],
+        'total_orders': total_orders,
+        'completed': completed,
+        'in_progress': in_progress,
+        'pending': pending,
+        'total_cost': total_cost,
+        'factories': factories,
+        'status_choices': status_choices,
+        'date_from': date_from,
+        'date_to': date_to,
+        'selected_status': status_filter,
+        'selected_factory': factory_id,
     })

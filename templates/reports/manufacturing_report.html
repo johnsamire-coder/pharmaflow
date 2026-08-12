@@ -1,0 +1,125 @@
+{% extends 'core/base.html' %}
+{% block title %}تقرير التصنيع{% endblock %}
+{% block page_title %}تقرير التصنيع{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-industry me-2"></i>تقرير التصنيع</h2>
+    <a href="/reports/" class="pf-btn pf-btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
+</div>
+
+<!-- فلترة -->
+<div class="pf-filters mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="pf-form-label">المصنع</label>
+            <select name="factory" class="pf-form-select">
+                <option value="">كل المصانع</option>
+                {% for f in factories %}
+                <option value="{{ f.id }}" {% if selected_factory == f.id|stringformat:"s" %}selected{% endif %}>{{ f.factory_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="pf-form-label">الحالة</label>
+            <select name="status" class="pf-form-select">
+                <option value="">الكل</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="pf-btn pf-btn-primary me-2"><i class="fas fa-search"></i> بحث</button>
+            <a href="/reports/manufacturing/" class="pf-btn pf-btn-secondary"><i class="fas fa-redo"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- إحصائيات -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-clipboard-list"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي الأوامر</div>
+                <div class="pf-stat-value">{{ total_orders }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-check-double"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">مكتملة</div>
+                <div class="pf-stat-value">{{ completed }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-spinner"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">قيد التنفيذ</div>
+                <div class="pf-stat-value">{{ in_progress }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="pf-stat-card stat-info">
+            <div class="pf-stat-icon icon-info"><i class="fas fa-dollar-sign"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي التكاليف</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ total_cost|floatformat:2|default:"0.00" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول -->
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-list me-2"></i>أوامر التصنيع</h6>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>رقم الأمر</th>
+                    <th>المصنع</th>
+                    <th>المنتج</th>
+                    <th>الكمية</th>
+                    <th>تاريخ التسليم</th>
+                    <th>التكلفة</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td style="font-weight:700;color:var(--pf-primary);">{{ order.order_number }}</td>
+                    <td style="font-weight:600;">{{ order.factory.factory_name }}</td>
+                    <td>{{ order.product.product_name }}</td>
+                    <td style="font-weight:700;">{{ order.quantity_ordered }}</td>
+                    <td style="color:#888;font-size:13px;">{{ order.expected_delivery|date:"Y/m/d"|default:"-" }}</td>
+                    <td style="font-weight:700;">{{ order.total_cost|floatformat:2|default:"0.00" }}</td>
+                    <td>
+                        {% if order.status == 'completed' %}
+                        <span class="pf-badge pf-badge-success">مكتمل</span>
+                        {% elif order.status == 'in_progress' %}
+                        <span class="pf-badge pf-badge-warning">قيد التنفيذ</span>
+                        {% elif order.status == 'pending' %}
+                        <span class="pf-badge pf-badge-info">معلق</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-danger">ملغي</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">لا توجد أوامر تصنيع</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

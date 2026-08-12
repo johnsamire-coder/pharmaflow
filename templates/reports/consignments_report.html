@@ -1,0 +1,119 @@
+{% extends 'core/base.html' %}
+{% block title %}تقرير التصريف{% endblock %}
+{% block page_title %}تقرير التصريف{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h2><i class="fas fa-boxes-stacked me-2"></i>تقرير التصريف</h2>
+    <a href="/reports/" class="pf-btn pf-btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
+</div>
+
+<!-- فلترة -->
+<div class="pf-filters mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-2">
+            <label class="pf-form-label">من تاريخ</label>
+            <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="pf-form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="pf-form-label">إلى تاريخ</label>
+            <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="pf-form-label">العميل</label>
+            <select name="customer" class="pf-form-select">
+                <option value="">كل العملاء</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>{{ c.customer_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="pf-form-label">الحالة</label>
+            <select name="status" class="pf-form-select">
+                <option value="">الكل</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="pf-btn pf-btn-primary me-2"><i class="fas fa-search"></i> بحث</button>
+            <a href="/reports/consignments/" class="pf-btn pf-btn-secondary"><i class="fas fa-redo"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- إحصائيات -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-boxes-stacked"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">قيمة المرسل</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ total_sent_value|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-check-circle"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">قيمة المباع</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ total_sold_value|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-warning">
+            <div class="pf-stat-icon icon-warning"><i class="fas fa-undo"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">قيمة المرتجع</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ total_returned_value|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول -->
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-list me-2"></i>أوامر التصريف</h6>
+        <span class="pf-badge pf-badge-primary">{{ consignments|length }} أمر</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>رقم الأمر</th>
+                    <th>العميل</th>
+                    <th>تاريخ الإرسال</th>
+                    <th>قيمة المرسل</th>
+                    <th>قيمة المباع</th>
+                    <th>قيمة المرتجع</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cs in consignments %}
+                <tr>
+                    <td><a href="/consignments/{{ cs.pk }}/" style="color:var(--pf-primary);text-decoration:none;font-weight:700;">{{ cs.consignment_number }}</a></td>
+                    <td style="font-weight:600;">{{ cs.customer.customer_name }}</td>
+                    <td style="color:#888;font-size:13px;">{{ cs.sent_date|date:"Y/m/d" }}</td>
+                    <td style="font-weight:700;">{{ cs.total_sent_value|floatformat:2 }}</td>
+                    <td style="color:var(--pf-success);font-weight:600;">{{ cs.total_sold_value|floatformat:2 }}</td>
+                    <td style="color:var(--pf-warning);font-weight:600;">{{ cs.total_returned_value|floatformat:2 }}</td>
+                    <td>
+                        <span class="pf-badge pf-badge-{% if cs.status == 'settled' %}success{% elif cs.status == 'sent' %}info{% elif cs.status == 'partial_returned' %}warning{% elif cs.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
+                            {{ cs.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">لا توجد أوامر تصريف</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -7,17 +7,17 @@
     <h2><i class="fas fa-chart-bar me-2"></i>التقارير والتحليلات</h2>
 </div>
 
-<!-- Report Cards -->
 <div class="row g-4">
+    <!-- تقرير المبيعات -->
     <div class="col-md-4 col-sm-6">
-        <a href="{% url 'reports:sales_report' %}" style="text-decoration:none;">
-            <div class="pf-card" style="border-top:4px solid var(--pf-primary);transition:all 0.3s;cursor:pointer;">
+        <a href="/reports/sales/" style="text-decoration:none;">
+            <div class="pf-card" style="border-top:4px solid var(--pf-primary);cursor:pointer;transition:all 0.3s;">
                 <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
                     <div style="width:72px;height:72px;background:var(--pf-primary-light);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:var(--pf-primary);">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير المبيعات</h5>
-                    <p style="color:#888;font-size:13px;margin:0;">تحليل شامل للمبيعات والإيرادات</p>
+                    <p style="color:#888;font-size:13px;margin:0;">تحليل شامل للمبيعات والإيرادات حسب العميل والمنتج</p>
                 </div>
                 <div class="pf-card-footer" style="text-align:center;">
                     <span style="color:var(--pf-primary);font-size:13px;font-weight:600;">
@@ -28,15 +28,16 @@
         </a>
     </div>
 
+    <!-- تقرير التحصيلات -->
     <div class="col-md-4 col-sm-6">
-        <a href="{% url 'reports:inventory_report' %}" style="text-decoration:none;">
-            <div class="pf-card" style="border-top:4px solid var(--pf-success);transition:all 0.3s;cursor:pointer;">
+        <a href="/reports/collections/" style="text-decoration:none;">
+            <div class="pf-card" style="border-top:4px solid var(--pf-success);cursor:pointer;transition:all 0.3s;">
                 <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
                     <div style="width:72px;height:72px;background:var(--pf-success-light);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:var(--pf-success);">
-                        <i class="fas fa-warehouse"></i>
+                        <i class="fas fa-hand-holding-usd"></i>
                     </div>
-                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير المخزون</h5>
-                    <p style="color:#888;font-size:13px;margin:0;">حالة المخزون والدفعات وتواريخ الانتهاء</p>
+                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير التحصيلات</h5>
+                    <p style="color:#888;font-size:13px;margin:0;">متابعة التحصيلات النقدية والشيكات والتحويلات</p>
                 </div>
                 <div class="pf-card-footer" style="text-align:center;">
                     <span style="color:var(--pf-success);font-size:13px;font-weight:600;">
@@ -47,15 +48,16 @@
         </a>
     </div>
 
+    <!-- تقرير المخزون -->
     <div class="col-md-4 col-sm-6">
-        <a href="{% url 'reports:customer_report' %}" style="text-decoration:none;">
-            <div class="pf-card" style="border-top:4px solid var(--pf-warning);transition:all 0.3s;cursor:pointer;">
+        <a href="/reports/inventory/" style="text-decoration:none;">
+            <div class="pf-card" style="border-top:4px solid var(--pf-warning);cursor:pointer;transition:all 0.3s;">
                 <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
                     <div style="width:72px;height:72px;background:var(--pf-warning-light);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:var(--pf-warning);">
-                        <i class="fas fa-user-tie"></i>
+                        <i class="fas fa-warehouse"></i>
                     </div>
-                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير العملاء</h5>
-                    <p style="color:#888;font-size:13px;margin:0;">أرصدة العملاء والمديونيات</p>
+                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير المخزون</h5>
+                    <p style="color:#888;font-size:13px;margin:0;">حالة المخزون والدفعات وتواريخ الانتهاء FEFO</p>
                 </div>
                 <div class="pf-card-footer" style="text-align:center;">
                     <span style="color:var(--pf-warning);font-size:13px;font-weight:600;">
@@ -66,15 +68,16 @@
         </a>
     </div>
 
+    <!-- تقرير العملاء -->
     <div class="col-md-4 col-sm-6">
-        <a href="{% url 'reports:collections_report' %}" style="text-decoration:none;">
-            <div class="pf-card" style="border-top:4px solid var(--pf-info);transition:all 0.3s;cursor:pointer;">
+        <a href="/reports/customers/" style="text-decoration:none;">
+            <div class="pf-card" style="border-top:4px solid var(--pf-info);cursor:pointer;transition:all 0.3s;">
                 <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
                     <div style="width:72px;height:72px;background:var(--pf-info-light);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:var(--pf-info);">
-                        <i class="fas fa-hand-holding-usd"></i>
+                        <i class="fas fa-user-tie"></i>
                     </div>
-                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير التحصيلات</h5>
-                    <p style="color:#888;font-size:13px;margin:0;">متابعة التحصيلات والشيكات</p>
+                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير العملاء</h5>
+                    <p style="color:#888;font-size:13px;margin:0;">أرصدة العملاء والمديونيات وحدود الائتمان</p>
                 </div>
                 <div class="pf-card-footer" style="text-align:center;">
                     <span style="color:var(--pf-info);font-size:13px;font-weight:600;">
@@ -85,34 +88,44 @@
         </a>
     </div>
 
+    <!-- تقرير التصريف -->
     <div class="col-md-4 col-sm-6">
-        <div class="pf-card" style="border-top:4px solid #aaa;opacity:0.6;">
-            <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
-                <div style="width:72px;height:72px;background:#f0f1f3;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:#aaa;">
-                    <i class="fas fa-boxes-stacked"></i>
+        <a href="/reports/consignments/" style="text-decoration:none;">
+            <div class="pf-card" style="border-top:4px solid #7209b7;cursor:pointer;transition:all 0.3s;">
+                <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
+                    <div style="width:72px;height:72px;background:#f3e8ff;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:#7209b7;">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </div>
+                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير التصريف</h5>
+                    <p style="color:#888;font-size:13px;margin:0;">متابعة أوامر التصريف والمباع والمرتجع</p>
                 </div>
-                <h5 style="font-weight:800;color:#888;margin-bottom:8px;">تقرير التصريف</h5>
-                <p style="color:#bbb;font-size:13px;margin:0;">قريباً...</p>
+                <div class="pf-card-footer" style="text-align:center;">
+                    <span style="color:#7209b7;font-size:13px;font-weight:600;">
+                        فتح التقرير <i class="fas fa-arrow-left ms-1"></i>
+                    </span>
+                </div>
             </div>
-            <div class="pf-card-footer" style="text-align:center;">
-                <span style="color:#aaa;font-size:13px;">قريباً</span>
-            </div>
-        </div>
+        </a>
     </div>
 
+    <!-- تقرير التصنيع -->
     <div class="col-md-4 col-sm-6">
-        <div class="pf-card" style="border-top:4px solid #aaa;opacity:0.6;">
-            <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
-                <div style="width:72px;height:72px;background:#f0f1f3;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:#aaa;">
-                    <i class="fas fa-industry"></i>
+        <a href="/reports/manufacturing/" style="text-decoration:none;">
+            <div class="pf-card" style="border-top:4px solid #ef233c;cursor:pointer;transition:all 0.3s;">
+                <div class="pf-card-body" style="text-align:center;padding:32px 24px;">
+                    <div style="width:72px;height:72px;background:#fdedef;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:#ef233c;">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h5 style="font-weight:800;color:#333;margin-bottom:8px;">تقرير التصنيع</h5>
+                    <p style="color:#888;font-size:13px;margin:0;">أوامر التصنيع والمصانع والتكاليف</p>
                 </div>
-                <h5 style="font-weight:800;color:#888;margin-bottom:8px;">تقرير التصنيع</h5>
-                <p style="color:#bbb;font-size:13px;margin:0;">قريباً...</p>
+                <div class="pf-card-footer" style="text-align:center;">
+                    <span style="color:#ef233c;font-size:13px;font-weight:600;">
+                        فتح التقرير <i class="fas fa-arrow-left ms-1"></i>
+                    </span>
+                </div>
             </div>
-            <div class="pf-card-footer" style="text-align:center;">
-                <span style="color:#aaa;font-size:13px;">قريباً</span>
-            </div>
-        </div>
+        </a>
     </div>
 </div>
 {% endblock %}

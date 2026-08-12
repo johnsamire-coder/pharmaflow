@@ -1,157 +1,181 @@
-{% extends "core/base.html" %}
-{% block title %}تقرير التحصيل{% endblock %}
+{% extends 'core/base.html' %}
+{% block title %}تقرير التحصيلات{% endblock %}
+{% block page_title %}تقرير التحصيلات{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">تقرير التحصيل</h3>
-    <button onclick="window.print()" class="btn btn-outline-dark btn-sm no-print">🖨️ طباعة</button>
+<div class="pf-page-header">
+    <h2><i class="fas fa-hand-holding-usd me-2"></i>تقرير التحصيلات</h2>
+    <a href="/reports/" class="pf-btn pf-btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
 </div>
 
-<div class="card shadow-sm mb-3 no-print">
-    <div class="card-body">
-        <form method="get" class="row g-2">
-            <div class="col-md-2">
-                <label class="form-label small">من تاريخ</label>
-                <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">إلى تاريخ</label>
-                <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label small">العميل</label>
-                <select name="customer" class="form-select form-select-sm">
-                    <option value="">كل العملاء</option>
-                    {% for c in customers %}
-                        <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.pharmacy_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">طريقة السداد</label>
-                <select name="method" class="form-select form-select-sm">
-                    <option value="">كل الطرق</option>
-                    {% for key, label in method_choices %}
-                        <option value="{{ key }}" {% if selected_method == key %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">الحالة</label>
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">كل الحالات</option>
-                    {% for key, label in status_choices %}
-                        <option value="{{ key }}" {% if selected_status == key %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button class="btn btn-primary btn-sm w-100">عرض</button>
-            </div>
-        </form>
-    </div>
+<!-- فلترة -->
+<div class="pf-filters mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-2">
+            <label class="pf-form-label">من تاريخ</label>
+            <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="pf-form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="pf-form-label">إلى تاريخ</label>
+            <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="pf-form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="pf-form-label">العميل</label>
+            <select name="customer" class="pf-form-select">
+                <option value="">كل العملاء</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.customer_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="pf-form-label">طريقة الدفع</label>
+            <select name="method" class="pf-form-select">
+                <option value="">الكل</option>
+                <option value="cash" {% if selected_method == 'cash' %}selected{% endif %}>نقدي</option>
+                <option value="cheque" {% if selected_method == 'cheque' %}selected{% endif %}>شيك</option>
+                <option value="transfer" {% if selected_method == 'transfer' %}selected{% endif %}>تحويل</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="pf-btn pf-btn-primary me-2"><i class="fas fa-search"></i> بحث</button>
+            <a href="/reports/collections/" class="pf-btn pf-btn-secondary"><i class="fas fa-redo"></i></a>
+        </div>
+    </form>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-4">
-        <div class="card shadow-sm text-center bg-success text-white">
-            <div class="card-body">
-                <div class="small">إجمالي التحصيل</div>
-                <div class="fs-5 fw-bold">{{ totals.total|floatformat:2|default:"0" }}</div>
+<!-- إحصائيات -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-success">
+            <div class="pf-stat-icon icon-success"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">إجمالي التحصيلات</div>
+                <div class="pf-stat-value" style="font-size:20px;">{{ totals.total|floatformat:2|default:"0.00" }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm text-center bg-primary text-white">
-            <div class="card-body">
-                <div class="small">مؤكد</div>
-                <div class="fs-5 fw-bold">{{ confirmed_total|floatformat:2 }}</div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-primary">
+            <div class="pf-stat-icon icon-primary"><i class="fas fa-receipt"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">عدد التحصيلات</div>
+                <div class="pf-stat-value">{{ totals.count|default:"0" }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm text-center bg-warning text-dark">
-            <div class="card-body">
-                <div class="small">معلق / تحت التحصيل</div>
-                <div class="fs-5 fw-bold">{{ pending_total|floatformat:2 }}</div>
+    <div class="col-md-4 col-6">
+        <div class="pf-stat-card stat-info">
+            <div class="pf-stat-icon icon-info"><i class="fas fa-chart-pie"></i></div>
+            <div class="pf-stat-content">
+                <div class="pf-stat-label">طرق الدفع</div>
+                <div class="pf-stat-value">{{ by_method|length }}</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-5">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="mb-3">حسب طريقة السداد</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light">
-                            <tr><th>الطريقة</th><th>الإجمالي</th><th>عدد</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for row in by_method %}
-                            <tr>
-                                <td>{{ row.payment_method }}</td>
-                                <td>{{ row.total|floatformat:2 }}</td>
-                                <td>{{ row.count }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+<div class="row g-4 mb-4">
+    <!-- توزيع طرق الدفع -->
+    <div class="col-md-4">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-chart-pie me-2"></i>توزيع طرق الدفع</h6>
+            </div>
+            <div class="pf-card-body">
+                {% for row in by_method %}
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8f9fc;border-radius:8px;margin-bottom:8px;">
+                    <div>
+                        {% if row.payment_method == 'cash' %}
+                        <span class="pf-badge pf-badge-success"><i class="fas fa-money-bill me-1"></i>نقدي</span>
+                        {% elif row.payment_method == 'cheque' %}
+                        <span class="pf-badge pf-badge-warning"><i class="fas fa-money-check me-1"></i>شيك</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-info"><i class="fas fa-exchange-alt me-1"></i>تحويل</span>
+                        {% endif %}
+                        <small style="color:#888;margin-right:8px;">{{ row.count }} عملية</small>
+                    </div>
+                    <strong style="color:var(--pf-success);">{{ row.total|floatformat:2 }}</strong>
                 </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">لا توجد بيانات</div>
+                {% endfor %}
             </div>
         </div>
     </div>
 
-    <div class="col-md-7">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="mb-3">حسب العميل (أعلى 20)</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light">
-                            <tr><th>العميل</th><th>الإجمالي</th><th>عدد</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for row in by_customer %}
-                            <tr>
-                                <td>{{ row.customer__pharmacy_name }}</td>
-                                <td>{{ row.total|floatformat:2 }}</td>
-                                <td>{{ row.count }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+    <!-- أعلى العملاء -->
+    <div class="col-md-8">
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-users me-2"></i>أعلى العملاء تحصيلاً</h6>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="pf-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>العميل</th>
+                            <th>عدد العمليات</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in by_customer %}
+                        <tr>
+                            <td style="color:#aaa;">{{ forloop.counter }}</td>
+                            <td style="font-weight:600;">{{ row.customer__customer_name }}</td>
+                            <td>{{ row.count }}</td>
+                            <td style="font-weight:700;color:var(--pf-success);">{{ row.total|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد بيانات</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h5 class="mb-3">تفاصيل التحصيلات</h5>
-        <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0">
-                <thead class="table-light">
-                    <tr><th>السند</th><th>التاريخ</th><th>العميل</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th></tr>
-                </thead>
-                <tbody>
-                    {% for col in collections %}
-                    <tr>
-                        <td><a href="/collections/{{ col.pk }}/">{{ col.receipt_number }}</a></td>
-                        <td>{{ col.collection_date }}</td>
-                        <td>{{ col.customer.pharmacy_name }}</td>
-                        <td class="text-success fw-bold">{{ col.amount|floatformat:2 }}</td>
-                        <td>{{ col.get_payment_method_display }}</td>
-                        <td>{{ col.get_status_display }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center py-3">لا توجد بيانات</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<!-- التفصيلي -->
+<div class="pf-card">
+    <div class="pf-card-header">
+        <h6><i class="fas fa-list me-2"></i>التفاصيل</h6>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="pf-table">
+            <thead>
+                <tr>
+                    <th>العميل</th>
+                    <th>التاريخ</th>
+                    <th>المبلغ</th>
+                    <th>طريقة الدفع</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for col in collections %}
+                <tr>
+                    <td style="font-weight:600;">{{ col.customer.customer_name }}</td>
+                    <td style="color:#888;font-size:13px;">{{ col.collection_date|date:"Y/m/d" }}</td>
+                    <td style="font-weight:700;color:var(--pf-success);">{{ col.amount|floatformat:2 }}</td>
+                    <td>
+                        {% if col.payment_method == 'cash' %}
+                        <span class="pf-badge pf-badge-success">نقدي</span>
+                        {% elif col.payment_method == 'cheque' %}
+                        <span class="pf-badge pf-badge-warning">شيك</span>
+                        {% else %}
+                        <span class="pf-badge pf-badge-info">تحويل</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">لا توجد تحصيلات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

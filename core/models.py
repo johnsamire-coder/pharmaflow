@@ -171,3 +171,49 @@ class CompanyInfo(TimeStampedModel):
 
     def __str__(self):
         return self.company_name
+
+
+# ===========================
+# User Profile (Role System)
+# ===========================
+class UserProfile(TimeStampedModel):
+    ROLE_CHOICES = [
+        ('admin',         'مدير'),
+        ('sales_manager', 'مدير مبيعات'),
+        ('sales_rep',     'مندوب مبيعات'),
+        ('warehouse',     'أمين مخزن'),
+        ('accountant',    'محاسب'),
+        ('viewer',        'مشاهد'),
+    ]
+
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='user_profiles'
+    )
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+    role = models.CharField(
+        max_length=30,
+        choices=ROLE_CHOICES,
+        default='sales_rep'
+    )
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = [('company', 'user')]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_role_display()}"
+
+    def get_role_color(self):
+        from core.roles import get_role_color
+        return get_role_color(self.role)
+
+    def has_permission(self, permission):
+        from core.roles import user_has_permission
+        return user_has_permission(self.user, permission)
