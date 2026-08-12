@@ -1,15 +1,39 @@
 {% extends 'core/base.html' %}
+{% load static %}
 {% block title %}تقرير المبيعات{% endblock %}
 {% block page_title %}تقرير المبيعات{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/print.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="pf-page-header">
-    <h2><i class="fas fa-chart-line me-2"></i>تقرير المبيعات</h2>
-    <a href="/reports/" class="pf-btn pf-btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
+<!-- أزرار الإجراءات -->
+<div class="print-actions no-print">
+    <h4><i class="fas fa-chart-line me-2 text-primary"></i>تقرير المبيعات</h4>
+    <a href="/reports/" class="pf-btn pf-btn-secondary pf-btn-sm">
+        <i class="fas fa-arrow-right"></i> رجوع
+    </a>
+    <button onclick="window.print()" class="btn-print">
+        <i class="fas fa-print"></i> طباعة / PDF
+    </button>
+    <a href="/reports/export/sales/?date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}{% if selected_customer %}&customer={{ selected_customer }}{% endif %}"
+       class="btn-excel">
+        <i class="fas fa-file-excel"></i> تصدير Excel
+    </a>
 </div>
 
-<!-- فلترة -->
-<div class="pf-filters mb-4">
+<!-- Print Header -->
+<div class="print-header-wrapper">
+    {% include 'partials/print_header.html' %}
+    <div class="print-title">
+        <h2>تقرير المبيعات</h2>
+        <span>الفترة: {{ date_from|date:"Y/m/d" }} إلى {{ date_to|date:"Y/m/d" }}</span>
+    </div>
+</div>
+
+<!-- فلترة (screen only) -->
+<div class="pf-filters mb-4 no-print">
     <form method="get" class="row g-3 align-items-end">
         <div class="col-md-3">
             <label class="pf-form-label">من تاريخ</label>
@@ -25,24 +49,20 @@
                 <option value="">كل العملاء</option>
                 {% for c in customers %}
                 <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>
-                    {{ c.customer_name }}
+                    {{ c.pharmacy_name }}
                 </option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-3">
-            <button type="submit" class="pf-btn pf-btn-primary me-2">
-                <i class="fas fa-search"></i> بحث
-            </button>
-            <a href="/reports/sales/" class="pf-btn pf-btn-secondary">
-                <i class="fas fa-redo"></i>
-            </a>
+            <button type="submit" class="pf-btn pf-btn-primary me-2"><i class="fas fa-search"></i> بحث</button>
+            <a href="/reports/sales/" class="pf-btn pf-btn-secondary"><i class="fas fa-redo"></i></a>
         </div>
     </form>
 </div>
 
 <!-- إحصائيات -->
-<div class="row g-3 mb-4">
+<div class="row g-3 mb-4 no-print">
     <div class="col-md-3 col-6">
         <div class="pf-stat-card stat-primary">
             <div class="pf-stat-icon icon-primary"><i class="fas fa-file-invoice"></i></div>
@@ -57,7 +77,7 @@
             <div class="pf-stat-icon icon-success"><i class="fas fa-money-bill"></i></div>
             <div class="pf-stat-content">
                 <div class="pf-stat-label">إجمالي المبيعات</div>
-                <div class="pf-stat-value" style="font-size:18px;">{{ totals.total_sales|floatformat:2|default:"0.00" }}</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ totals.total_sales|floatformat:2 }}</div>
             </div>
         </div>
     </div>
@@ -65,8 +85,8 @@
         <div class="pf-stat-card stat-info">
             <div class="pf-stat-icon icon-info"><i class="fas fa-check-circle"></i></div>
             <div class="pf-stat-content">
-                <div class="pf-stat-label">المحصّل</div>
-                <div class="pf-stat-value" style="font-size:18px;">{{ totals.total_paid|floatformat:2|default:"0.00" }}</div>
+                <div class="pf-stat-label">المدفوع</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ totals.total_paid|floatformat:2 }}</div>
             </div>
         </div>
     </div>
@@ -74,93 +94,44 @@
         <div class="pf-stat-card stat-danger">
             <div class="pf-stat-icon icon-danger"><i class="fas fa-exclamation-circle"></i></div>
             <div class="pf-stat-content">
-                <div class="pf-stat-label">المستحق</div>
-                <div class="pf-stat-value" style="font-size:18px;">{{ totals.total_due|floatformat:2|default:"0.00" }}</div>
+                <div class="pf-stat-label">المتبقي</div>
+                <div class="pf-stat-value" style="font-size:18px;">{{ totals.total_due|floatformat:2 }}</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- أعلى العملاء -->
-    <div class="col-md-6">
-        <div class="pf-card">
-            <div class="pf-card-header">
-                <h6><i class="fas fa-trophy me-2 text-warning"></i>أعلى العملاء مبيعاً</h6>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="pf-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>العميل</th>
-                            <th>عدد الفواتير</th>
-                            <th>الإجمالي</th>
-                            <th>المستحق</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in by_customer %}
-                        <tr>
-                            <td style="color:#aaa;">{{ forloop.counter }}</td>
-                            <td style="font-weight:600;">{{ row.customer__customer_name }}</td>
-                            <td>{{ row.count }}</td>
-                            <td style="font-weight:700;color:var(--pf-primary);">{{ row.total|floatformat:2 }}</td>
-                            <td style="color:var(--pf-danger);">{{ row.due|floatformat:2 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted py-3">لا توجد بيانات</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+<!-- ملخص للطباعة -->
+<div class="print-info-grid" style="display:none;" id="printSummary">
+    <div class="print-info-item">
+        <span class="label">إجمالي المبيعات:</span>
+        <span class="value">{{ totals.total_sales|floatformat:2 }} ج.م</span>
     </div>
-
-    <!-- أعلى المنتجات -->
-    <div class="col-md-6">
-        <div class="pf-card">
-            <div class="pf-card-header">
-                <h6><i class="fas fa-pills me-2 text-primary"></i>أعلى المنتجات مبيعاً</h6>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="pf-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>المنتج</th>
-                            <th>الكمية</th>
-                            <th>القيمة</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in by_product %}
-                        <tr>
-                            <td style="color:#aaa;">{{ forloop.counter }}</td>
-                            <td style="font-weight:600;">{{ row.product__product_name }}</td>
-                            <td style="font-weight:700;">{{ row.total_qty }}</td>
-                            <td style="font-weight:700;color:var(--pf-success);">{{ row.total_value|floatformat:2 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد بيانات</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="print-info-item">
+        <span class="label">المدفوع:</span>
+        <span class="value">{{ totals.total_paid|floatformat:2 }} ج.م</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">المتبقي:</span>
+        <span class="value">{{ totals.total_due|floatformat:2 }} ج.م</span>
+    </div>
+    <div class="print-info-item">
+        <span class="label">عدد الفواتير:</span>
+        <span class="value">{{ totals.count }}</span>
     </div>
 </div>
 
-<!-- الفواتير التفصيلية -->
-<div class="pf-card mt-4">
-    <div class="pf-card-header">
+<!-- جدول الفواتير -->
+<div class="pf-card">
+    <div class="pf-card-header no-print">
         <h6><i class="fas fa-list me-2"></i>الفواتير التفصيلية</h6>
         <span class="pf-badge pf-badge-primary">{{ invoices|length }} فاتورة</span>
     </div>
     <div style="overflow-x:auto;">
-        <table class="pf-table">
+        <table class="pf-table print-table">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>رقم الفاتورة</th>
                     <th>العميل</th>
                     <th>التاريخ</th>
@@ -173,27 +144,58 @@
             <tbody>
                 {% for inv in invoices %}
                 <tr>
-                    <td><a href="/sales/{{ inv.pk }}/" style="color:var(--pf-primary);text-decoration:none;font-weight:700;">{{ inv.invoice_number }}</a></td>
-                    <td style="font-weight:600;">{{ inv.customer.customer_name }}</td>
-                    <td style="color:#888;font-size:13px;">{{ inv.invoice_date|date:"Y/m/d" }}</td>
+                    <td>{{ forloop.counter }}</td>
+                    <td style="font-weight:700;">{{ inv.invoice_number }}</td>
+                    <td>{{ inv.customer.pharmacy_name }}</td>
+                    <td>{{ inv.invoice_date|date:"Y/m/d" }}</td>
                     <td style="font-weight:700;">{{ inv.total_amount|floatformat:2 }}</td>
-                    <td style="color:var(--pf-success);font-weight:600;">{{ inv.paid_amount|floatformat:2 }}</td>
-                    <td style="color:var(--pf-danger);font-weight:600;">{{ inv.remaining_amount|floatformat:2 }}</td>
+                    <td style="color:var(--pf-success);">{{ inv.amount_paid|floatformat:2 }}</td>
+                    <td style="color:var(--pf-danger);">{{ inv.amount_due|floatformat:2 }}</td>
                     <td>
-                        {% if inv.status == 'paid' %}
-                        <span class="pf-badge pf-badge-success">مدفوعة</span>
-                        {% elif inv.status == 'partial' %}
-                        <span class="pf-badge pf-badge-warning">جزئية</span>
-                        {% else %}
-                        <span class="pf-badge pf-badge-danger">غير مدفوعة</span>
-                        {% endif %}
+                        {% if inv.status == 'fully_paid' %}مدفوعة
+                        {% elif inv.status == 'partially_paid' %}جزئي
+                        {% else %}{{ inv.status }}{% endif %}
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-center text-muted py-4">لا توجد فواتير في هذه الفترة</td></tr>
+                <tr><td colspan="8" style="text-align:center;padding:24px;color:#aaa;">لا توجد فواتير</td></tr>
                 {% endfor %}
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" style="font-weight:700;text-align:center;">الإجمالي</td>
+                    <td style="font-weight:700;">{{ totals.total_sales|floatformat:2 }}</td>
+                    <td style="font-weight:700;">{{ totals.total_paid|floatformat:2 }}</td>
+                    <td style="font-weight:700;">{{ totals.total_due|floatformat:2 }}</td>
+                    <td>-</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
+
+<!-- Print Footer -->
+<div class="print-footer">
+    <div class="signature-box">
+        <div class="signature-line">المحاسب / المسؤول</div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#aaa;">
+        طُبع في: {% now "Y/m/d H:i" %} | PharmaFlow
+    </div>
+    <div class="signature-box">
+        <div class="signature-line">المدير</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Show print summary when printing
+window.addEventListener('beforeprint', function() {
+    document.getElementById('printSummary').style.display = 'grid';
+});
+window.addEventListener('afterprint', function() {
+    document.getElementById('printSummary').style.display = 'none';
+});
+</script>
 {% endblock %}

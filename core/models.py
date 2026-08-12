@@ -19,6 +19,24 @@ class Company(TimeStampedModel):
     email = models.EmailField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    # Subscription Fields
+    trial_start_date = models.DateField(null=True, blank=True, verbose_name='بداية التجربة')
+    trial_end_date = models.DateField(null=True, blank=True, verbose_name='نهاية التجربة')
+    subscription_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('trial', 'تجريبي'),
+            ('active', 'مفعّل'),
+            ('expired', 'منتهي'),
+            ('suspended', 'موقوف'),
+        ],
+        default='trial',
+        verbose_name='حالة الاشتراك',
+    )
+    subscription_start_date = models.DateField(null=True, blank=True)
+    subscription_end_date = models.DateField(null=True, blank=True)
+    subscription_notes = models.TextField(blank=True, null=True)
+
 
     def __str__(self):
         return self.name

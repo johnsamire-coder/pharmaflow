@@ -1,152 +1,218 @@
-{% extends "core/base.html" %}
+{% extends 'core/base.html' %}
+{% load static %}
 {% block title %}إعدادات الشركة{% endblock %}
+{% block page_title %}إعدادات الشركة{% endblock %}
+
 {% block content %}
-<h3 class="mb-4">⚙️ إعدادات الشركة</h3>
+<div class="pf-page-header">
+    <h2><i class="fas fa-cog me-2"></i>إعدادات الشركة</h2>
+</div>
 
-<ul class="nav nav-tabs mb-4" id="settingsTabs">
-    <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#tab_company">بيانات الشركة</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#tab_system">إعدادات النظام</a>
-    </li>
-</ul>
+{% if messages %}
+{% for msg in messages %}
+<div class="pf-alert pf-alert-{{ msg.tags }}">
+    <i class="fas fa-check-circle"></i> {{ msg }}
+</div>
+{% endfor %}
+{% endif %}
 
-<div class="tab-content">
-    <!-- بيانات الشركة -->
-    <div class="tab-pane fade show active" id="tab_company">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_type" value="company_info">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">اسم الشركة (عربي)</label>
-                            <input type="text" name="company_name" class="form-control"
-                                   value="{{ company_info.company_name|default:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">اسم الشركة (إنجليزي)</label>
-                            <input type="text" name="company_name_en" class="form-control"
-                                   value="{{ company_info.company_name_en|default:'' }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">العنوان</label>
-                            <textarea name="address" class="form-control" rows="2">{{ company_info.address|default:'' }}</textarea>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">التليفون</label>
-                            <input type="text" name="phone" class="form-control"
-                                   value="{{ company_info.phone|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">الفاكس</label>
-                            <input type="text" name="fax" class="form-control"
-                                   value="{{ company_info.fax|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">الإيميل</label>
-                            <input type="email" name="email" class="form-control"
-                                   value="{{ company_info.email|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">الموقع الإلكتروني</label>
-                            <input type="text" name="website" class="form-control"
-                                   value="{{ company_info.website|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">البطاقة الضريبية</label>
-                            <input type="text" name="tax_number" class="form-control"
-                                   value="{{ company_info.tax_number|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">السجل التجاري</label>
-                            <input type="text" name="commercial_register" class="form-control"
-                                   value="{{ company_info.commercial_register|default:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">الشعار</label>
-                            <input type="file" name="logo" class="form-control" accept="image/*">
-                            {% if company_info and company_info.logo %}
-                                <img src="{{ company_info.logo.url }}" height="60" class="mt-2 border rounded">
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">الختم</label>
-                            <input type="file" name="stamp" class="form-control" accept="image/*">
-                            {% if company_info and company_info.stamp %}
-                                <img src="{{ company_info.stamp.url }}" height="60" class="mt-2 border rounded">
-                            {% endif %}
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">ملاحظات الفاتورة</label>
-                            <textarea name="invoice_notes" class="form-control" rows="2">{{ company_info.invoice_notes|default:'' }}</textarea>
-                        </div>
+<div class="row g-4">
+    <!-- معاينة الشركة -->
+    <div class="col-md-4">
+        <div class="pf-card">
+            <div class="pf-card-body" style="text-align:center;padding:32px;">
+                {% if company_info.logo %}
+                <img src="{{ company_info.logo.url }}" style="height:80px;margin-bottom:16px;border-radius:12px;">
+                {% else %}
+                <div style="width:80px;height:80px;background:linear-gradient(135deg,#4361ee,#7209b7);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;color:white;">
+                    <i class="fas fa-building"></i>
+                </div>
+                {% endif %}
+                <h5 style="font-weight:800;">{{ company_info.company_name|default:request.company.name }}</h5>
+                {% if company_info.company_name_en %}
+                <p style="color:#888;font-size:13px;">{{ company_info.company_name_en }}</p>
+                {% endif %}
+                {% if company_info.tax_number %}
+                <span class="pf-badge pf-badge-primary">ضريبي: {{ company_info.tax_number }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- معاينة الطباعة -->
+        <div class="pf-card">
+            <div class="pf-card-header">
+                <h6><i class="fas fa-eye me-2"></i>معاينة رأس الطباعة</h6>
+            </div>
+            <div class="pf-card-body" style="background:#f8f9fc;border-radius:8px;padding:12px;font-size:11px;">
+                <div style="display:flex;align-items:center;gap:12px;border-bottom:2px solid #4361ee;padding-bottom:8px;">
+                    {% if company_info.logo %}
+                    <img src="{{ company_info.logo.url }}" style="height:40px;border-radius:6px;">
+                    {% else %}
+                    <div style="width:40px;height:40px;background:#4361ee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;"><i class="fas fa-capsules"></i></div>
+                    {% endif %}
+                    <div style="flex:1;text-align:center;">
+                        <div style="font-weight:800;font-size:13px;">{{ company_info.company_name|default:request.company.name }}</div>
+                        {% if company_info.phone %}<div style="color:#888;">{{ company_info.phone }}</div>{% endif %}
                     </div>
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">حفظ بيانات الشركة</button>
-                    </div>
-                </form>
+                    {% if company_info.stamp %}
+                    <img src="{{ company_info.stamp.url }}" style="height:40px;">
+                    {% endif %}
+                </div>
+                <div style="text-align:center;margin-top:6px;color:#888;">هكذا ستظهر شركتك في كل المطبوعات</div>
             </div>
         </div>
     </div>
 
-    <!-- إعدادات النظام -->
-    <div class="tab-pane fade" id="tab_system">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_type" value="system_settings">
+    <!-- فورم الإعدادات -->
+    <div class="col-md-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="company_info">
+
+            <!-- بيانات الشركة -->
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-building me-2 text-primary"></i>بيانات الشركة</h6>
+                </div>
+                <div class="pf-card-body">
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">نسبة الضريبة %</label>
-                            <input type="number" name="tax_rate" class="form-control" step="0.01"
-                                   value="{{ settings.tax_rate|default:'14' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">اسم الشركة (عربي) <span class="required">*</span></label>
+                                <input type="text" name="company_name" class="pf-form-control"
+                                       value="{{ company_info.company_name|default:'' }}"
+                                       placeholder="اسم الشركة بالعربية" required>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">أيام التنبيه قبل انتهاء الصلاحية</label>
-                            <input type="number" name="expiry_warning_days" class="form-control"
-                                   value="{{ settings.expiry_warning_days|default:'90' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">اسم الشركة (إنجليزي)</label>
+                                <input type="text" name="company_name_en" class="pf-form-control"
+                                       value="{{ company_info.company_name_en|default:'' }}"
+                                       placeholder="Company Name in English">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">أيام التنبيه للشيكات</label>
-                            <input type="number" name="cheque_warning_days" class="form-control"
-                                   value="{{ settings.cheque_warning_days|default:'7' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الرقم الضريبي</label>
+                                <input type="text" name="tax_number" class="pf-form-control"
+                                       value="{{ company_info.tax_number|default:'' }}"
+                                       placeholder="123-456-789">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">بادئة أرقام الفواتير</label>
-                            <input type="text" name="invoice_prefix" class="form-control"
-                                   value="{{ settings.invoice_prefix|default:'INV-' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">السجل التجاري</label>
+                                <input type="text" name="commercial_register" class="pf-form-control"
+                                       value="{{ company_info.commercial_register|default:'' }}">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">بادئة أرقام الأوردرات</label>
-                            <input type="text" name="order_prefix" class="form-control"
-                                   value="{{ settings.order_prefix|default:'SO-' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الهاتف</label>
+                                <input type="text" name="phone" class="pf-form-control"
+                                       value="{{ company_info.phone|default:'' }}"
+                                       placeholder="01xxxxxxxxx">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">بادئة سندات القبض</label>
-                            <input type="text" name="receipt_prefix" class="form-control"
-                                   value="{{ settings.receipt_prefix|default:'RV-' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الفاكس</label>
+                                <input type="text" name="fax" class="pf-form-control"
+                                       value="{{ company_info.fax|default:'' }}">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">بادئة المرتجعات</label>
-                            <input type="text" name="return_prefix" class="form-control"
-                                   value="{{ settings.return_prefix|default:'RET-' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">البريد الإلكتروني</label>
+                                <input type="email" name="email" class="pf-form-control"
+                                       value="{{ company_info.email|default:'' }}"
+                                       placeholder="info@company.com">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">أيام السداد الافتراضية</label>
-                            <input type="number" name="default_payment_days" class="form-control"
-                                   value="{{ settings.default_payment_days|default:'30' }}">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">الموقع الإلكتروني</label>
+                                <input type="text" name="website" class="pf-form-control"
+                                       value="{{ company_info.website|default:'' }}"
+                                       placeholder="www.company.com">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">العنوان</label>
+                                <textarea name="address" class="pf-form-control" rows="2"
+                                          placeholder="العنوان الكامل للشركة">{{ company_info.address|default:'' }}</textarea>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <!-- الشعار والختم -->
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-image me-2 text-warning"></i>الشعار والختم (تظهر في كل المطبوعات)</h6>
+                </div>
+                <div class="pf-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">
+                                    <i class="fas fa-image me-1 text-primary"></i>
+                                    شعار الشركة (Logo)
+                                </label>
+                                {% if company_info.logo %}
+                                <div style="margin-bottom:12px;padding:12px;background:#f8f9fc;border-radius:8px;text-align:center;">
+                                    <img src="{{ company_info.logo.url }}" style="height:60px;border-radius:8px;border:1px solid #eee;">
+                                    <div style="font-size:11px;color:#888;margin-top:6px;">الشعار الحالي</div>
+                                </div>
+                                {% endif %}
+                                <input type="file" name="logo" class="pf-form-control"
+                                       accept="image/png,image/jpeg,image/svg+xml">
+                                <small style="color:#888;font-size:11px;">PNG أو JPG - يُنصح بخلفية شفافة</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="pf-form-group">
+                                <label class="pf-form-label">
+                                    <i class="fas fa-stamp me-1 text-success"></i>
+                                    ختم الشركة (Stamp)
+                                </label>
+                                {% if company_info.stamp %}
+                                <div style="margin-bottom:12px;padding:12px;background:#f8f9fc;border-radius:8px;text-align:center;">
+                                    <img src="{{ company_info.stamp.url }}" style="height:60px;border-radius:8px;border:1px solid #eee;">
+                                    <div style="font-size:11px;color:#888;margin-top:6px;">الختم الحالي</div>
+                                </div>
+                                {% endif %}
+                                <input type="file" name="stamp" class="pf-form-control"
+                                       accept="image/png,image/jpeg">
+                                <small style="color:#888;font-size:11px;">PNG أو JPG - يُنصح بخلفية شفافة</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ملاحظات الفاتورة -->
+            <div class="pf-card">
+                <div class="pf-card-header">
+                    <h6><i class="fas fa-sticky-note me-2"></i>ملاحظات الفاتورة (تظهر أسفل كل فاتورة)</h6>
+                </div>
+                <div class="pf-card-body">
+                    <textarea name="invoice_notes" class="pf-form-control" rows="3"
+                              placeholder="مثال: الدفع خلال 30 يوم - البضاعة المباعة لا ترد ولا تستبدل...">{{ company_info.invoice_notes|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <div class="pf-card">
+                <div class="pf-card-footer" style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button type="submit" class="pf-btn pf-btn-primary pf-btn-lg">
+                        <i class="fas fa-save"></i> حفظ الإعدادات
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

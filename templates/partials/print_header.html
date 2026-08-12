@@ -1,0 +1,50 @@
+{% load static %}
+<div class="print-header">
+    <div class="print-header-inner">
+        <!-- Logo -->
+        <div class="print-logo">
+            {% if company_info.logo %}
+            <img src="{{ company_info.logo.url }}" alt="Logo" class="company-logo">
+            {% else %}
+            <div class="company-logo-placeholder">
+                <i class="fas fa-capsules"></i>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Company Info -->
+        <div class="print-company-info">
+            <h1 class="company-name">
+                {{ company_info.company_name|default:request.company.name }}
+            </h1>
+            {% if company_info.company_name_en %}
+            <h2 class="company-name-en">{{ company_info.company_name_en }}</h2>
+            {% endif %}
+            <div class="company-details">
+                {% if company_info.address %}
+                <span><i class="fas fa-map-marker-alt"></i> {{ company_info.address }}</span>
+                {% endif %}
+                {% if company_info.phone %}
+                <span><i class="fas fa-phone"></i> {{ company_info.phone }}</span>
+                {% endif %}
+                {% if company_info.email %}
+                <span><i class="fas fa-envelope"></i> {{ company_info.email }}</span>
+                {% endif %}
+                {% if company_info.tax_number %}
+                <span><i class="fas fa-file-invoice"></i> الرقم الضريبي: {{ company_info.tax_number }}</span>
+                {% endif %}
+                {% if company_info.commercial_register %}
+                <span><i class="fas fa-building"></i> السجل التجاري: {{ company_info.commercial_register }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stamp -->
+        <div class="print-stamp">
+            {% if company_info.stamp %}
+            <img src="{{ company_info.stamp.url }}" alt="Stamp" class="company-stamp">
+            {% endif %}
+        </div>
+    </div>
+    <div class="print-header-divider"></div>
+</div>

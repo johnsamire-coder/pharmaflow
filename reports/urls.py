@@ -11,4 +11,10 @@ urlpatterns = [
     path('customers/', views.customer_report, name='customer_report'),
     path('consignments/', views.consignments_report, name='consignments_report'),
     path('manufacturing/', views.manufacturing_report, name='manufacturing_report'),
+
+    # Excel Exports
+    path('export/sales/', views.export_sales_excel, name='export_sales'),
+    path('export/collections/', views.export_collections_excel, name='export_collections'),
+    path('export/inventory/', views.export_inventory_excel, name='export_inventory'),
+    path('export/customers/', views.export_customers_excel, name='export_customers'),
 ]

@@ -24,7 +24,7 @@
             <select name="customer" class="pf-form-select">
                 <option value="">كل العملاء</option>
                 {% for c in customers %}
-                <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>{{ c.customer_name }}</option>
+                <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>{{ c.pharmacy_name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -98,7 +98,7 @@
                 {% for cs in consignments %}
                 <tr>
                     <td><a href="/consignments/{{ cs.pk }}/" style="color:var(--pf-primary);text-decoration:none;font-weight:700;">{{ cs.consignment_number }}</a></td>
-                    <td style="font-weight:600;">{{ cs.customer.customer_name }}</td>
+                    <td style="font-weight:600;">{{ cs.customer.pharmacy_name }}</td>
                     <td style="color:#888;font-size:13px;">{{ cs.sent_date|date:"Y/m/d" }}</td>
                     <td style="font-weight:700;">{{ cs.total_sent_value|floatformat:2 }}</td>
                     <td style="color:var(--pf-success);font-weight:600;">{{ cs.total_sold_value|floatformat:2 }}</td>

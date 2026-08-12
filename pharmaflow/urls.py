@@ -1,6 +1,6 @@
-
 handler404 = 'pharmaflow.views.handler404'
 handler500 = 'pharmaflow.views.handler500'
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -19,6 +19,8 @@ urlpatterns = [
     path('bonuses/', include('bonuses.urls')),
     path('notifications/', include('notifications.urls')),
     path('manufacturing/', include('manufacturing.urls')),
+    path('consignments/', include('consignments.urls')),
+    path('roles/', include('core.role_urls')),
 ]
 
 if settings.DEBUG:

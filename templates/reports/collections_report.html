@@ -8,30 +8,21 @@
     <a href="/reports/" class="pf-btn pf-btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
 </div>
 
-<!-- فلترة -->
 <div class="pf-filters mb-4">
     <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-2">
-            <label class="pf-form-label">من تاريخ</label>
-            <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="pf-form-control">
-        </div>
-        <div class="col-md-2">
-            <label class="pf-form-label">إلى تاريخ</label>
-            <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="pf-form-control">
-        </div>
+        <div class="col-md-2"><label class="pf-form-label">من تاريخ</label><input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="pf-form-control"></div>
+        <div class="col-md-2"><label class="pf-form-label">إلى تاريخ</label><input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="pf-form-control"></div>
         <div class="col-md-3">
             <label class="pf-form-label">العميل</label>
             <select name="customer" class="pf-form-select">
                 <option value="">كل العملاء</option>
                 {% for c in customers %}
-                <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>
-                    {{ c.customer_name }}
-                </option>
+                <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>{{ c.pharmacy_name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-2">
-            <label class="pf-form-label">طريقة الدفع</label>
+            <label class="pf-form-label">الطريقة</label>
             <select name="method" class="pf-form-select">
                 <option value="">الكل</option>
                 <option value="cash" {% if selected_method == 'cash' %}selected{% endif %}>نقدي</option>
@@ -46,130 +37,24 @@
     </form>
 </div>
 
-<!-- إحصائيات -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-success">
-            <div class="pf-stat-icon icon-success"><i class="fas fa-money-bill-wave"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">إجمالي التحصيلات</div>
-                <div class="pf-stat-value" style="font-size:20px;">{{ totals.total|floatformat:2|default:"0.00" }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-primary">
-            <div class="pf-stat-icon icon-primary"><i class="fas fa-receipt"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">عدد التحصيلات</div>
-                <div class="pf-stat-value">{{ totals.count|default:"0" }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-info">
-            <div class="pf-stat-icon icon-info"><i class="fas fa-chart-pie"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">طرق الدفع</div>
-                <div class="pf-stat-value">{{ by_method|length }}</div>
-            </div>
-        </div>
-    </div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-success"><div class="pf-stat-icon icon-success"><i class="fas fa-money-bill-wave"></i></div><div class="pf-stat-content"><div class="pf-stat-label">إجمالي التحصيلات</div><div class="pf-stat-value" style="font-size:18px;">{{ totals.total|floatformat:2 }}</div></div></div></div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-primary"><div class="pf-stat-icon icon-primary"><i class="fas fa-receipt"></i></div><div class="pf-stat-content"><div class="pf-stat-label">عدد العمليات</div><div class="pf-stat-value">{{ totals.count }}</div></div></div></div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-info"><div class="pf-stat-icon icon-info"><i class="fas fa-chart-pie"></i></div><div class="pf-stat-content"><div class="pf-stat-label">طرق الدفع</div><div class="pf-stat-value">{{ by_method|length }}</div></div></div></div>
 </div>
 
-<div class="row g-4 mb-4">
-    <!-- توزيع طرق الدفع -->
-    <div class="col-md-4">
-        <div class="pf-card">
-            <div class="pf-card-header">
-                <h6><i class="fas fa-chart-pie me-2"></i>توزيع طرق الدفع</h6>
-            </div>
-            <div class="pf-card-body">
-                {% for row in by_method %}
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8f9fc;border-radius:8px;margin-bottom:8px;">
-                    <div>
-                        {% if row.payment_method == 'cash' %}
-                        <span class="pf-badge pf-badge-success"><i class="fas fa-money-bill me-1"></i>نقدي</span>
-                        {% elif row.payment_method == 'cheque' %}
-                        <span class="pf-badge pf-badge-warning"><i class="fas fa-money-check me-1"></i>شيك</span>
-                        {% else %}
-                        <span class="pf-badge pf-badge-info"><i class="fas fa-exchange-alt me-1"></i>تحويل</span>
-                        {% endif %}
-                        <small style="color:#888;margin-right:8px;">{{ row.count }} عملية</small>
-                    </div>
-                    <strong style="color:var(--pf-success);">{{ row.total|floatformat:2 }}</strong>
-                </div>
-                {% empty %}
-                <div class="text-center text-muted py-3">لا توجد بيانات</div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <!-- أعلى العملاء -->
-    <div class="col-md-8">
-        <div class="pf-card">
-            <div class="pf-card-header">
-                <h6><i class="fas fa-users me-2"></i>أعلى العملاء تحصيلاً</h6>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="pf-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>العميل</th>
-                            <th>عدد العمليات</th>
-                            <th>الإجمالي</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in by_customer %}
-                        <tr>
-                            <td style="color:#aaa;">{{ forloop.counter }}</td>
-                            <td style="font-weight:600;">{{ row.customer__customer_name }}</td>
-                            <td>{{ row.count }}</td>
-                            <td style="font-weight:700;color:var(--pf-success);">{{ row.total|floatformat:2 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد بيانات</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- التفصيلي -->
 <div class="pf-card">
-    <div class="pf-card-header">
-        <h6><i class="fas fa-list me-2"></i>التفاصيل</h6>
-    </div>
+    <div class="pf-card-header"><h6><i class="fas fa-list me-2"></i>التفاصيل</h6></div>
     <div style="overflow-x:auto;">
         <table class="pf-table">
-            <thead>
-                <tr>
-                    <th>العميل</th>
-                    <th>التاريخ</th>
-                    <th>المبلغ</th>
-                    <th>طريقة الدفع</th>
-                </tr>
-            </thead>
+            <thead><tr><th>العميل</th><th>التاريخ</th><th>المبلغ</th><th>الطريقة</th></tr></thead>
             <tbody>
                 {% for col in collections %}
                 <tr>
-                    <td style="font-weight:600;">{{ col.customer.customer_name }}</td>
-                    <td style="color:#888;font-size:13px;">{{ col.collection_date|date:"Y/m/d" }}</td>
+                    <td>{{ col.customer.pharmacy_name }}</td>
+                    <td>{{ col.collection_date|date:"Y/m/d" }}</td>
                     <td style="font-weight:700;color:var(--pf-success);">{{ col.amount|floatformat:2 }}</td>
-                    <td>
-                        {% if col.payment_method == 'cash' %}
-                        <span class="pf-badge pf-badge-success">نقدي</span>
-                        {% elif col.payment_method == 'cheque' %}
-                        <span class="pf-badge pf-badge-warning">شيك</span>
-                        {% else %}
-                        <span class="pf-badge pf-badge-info">تحويل</span>
-                        {% endif %}
-                    </td>
+                    <td>{{ col.payment_method }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="4" class="text-center text-muted py-4">لا توجد تحصيلات</td></tr>

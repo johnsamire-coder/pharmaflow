@@ -1,0 +1,300 @@
+/* ============================================
+   PharmaFlow - Print & PDF Styles
+   ============================================ */
+
+@media print {
+    * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+    .no-print, .pf-sidebar, .pf-topbar, .pf-sidebar-overlay { display: none !important; }
+    .pf-main { margin: 0 !important; }
+    body { font-family: 'Cairo', Arial, sans-serif !important; background: white !important; }
+    .print-actions { display: none !important; }
+    .page-break { page-break-after: always; }
+}
+
+/* Print Header */
+.print-header {
+    margin-bottom: 20px;
+}
+
+.print-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 0;
+    direction: rtl;
+}
+
+.print-logo {
+    flex-shrink: 0;
+}
+
+.company-logo {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+}
+
+.company-logo-placeholder {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #4361ee, #7209b7);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: white;
+}
+
+.print-company-info {
+    flex: 1;
+    text-align: center;
+}
+
+.company-name {
+    font-size: 22px;
+    font-weight: 900;
+    color: #1a1d3a;
+    margin: 0 0 4px;
+}
+
+.company-name-en {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin: 0 0 8px;
+}
+
+.company-details {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 16px;
+    font-size: 12px;
+    color: #555;
+}
+
+.company-details span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.company-details i {
+    color: #4361ee;
+    font-size: 11px;
+}
+
+.print-stamp {
+    flex-shrink: 0;
+}
+
+.company-stamp {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+}
+
+.print-header-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #4361ee, #7209b7);
+    border-radius: 2px;
+    margin-top: 12px;
+}
+
+/* Print Document Title */
+.print-title {
+    text-align: center;
+    margin: 16px 0;
+    padding: 12px;
+    background: #f0f2f8;
+    border-radius: 8px;
+}
+
+.print-title h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1a1d3a;
+    margin: 0;
+}
+
+.print-title span {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Print Table */
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+}
+
+.print-table thead th {
+    background: #4361ee !important;
+    color: white !important;
+    padding: 10px 12px;
+    font-weight: 700;
+    text-align: center;
+    border: 1px solid #3a56d4;
+}
+
+.print-table tbody td {
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.print-table tbody tr:nth-child(even) {
+    background: #f8f9fc;
+}
+
+.print-table tfoot td {
+    background: #1a1d3a !important;
+    color: white !important;
+    padding: 10px 12px;
+    font-weight: 700;
+    border: 1px solid #252850;
+}
+
+/* Print Footer */
+.print-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 2px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+}
+
+.print-footer .signature-box {
+    text-align: center;
+    min-width: 150px;
+}
+
+.print-footer .signature-line {
+    border-top: 1px solid #333;
+    margin-top: 40px;
+    padding-top: 4px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Print Info Grid */
+.print-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.print-info-item {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    padding: 6px 10px;
+    background: #f8f9fc;
+    border-radius: 6px;
+    border-right: 3px solid #4361ee;
+}
+
+.print-info-item .label {
+    font-weight: 700;
+    color: #333;
+    white-space: nowrap;
+}
+
+.print-info-item .value {
+    color: #555;
+}
+
+/* Actions Bar (screen only) */
+.print-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    align-items: center;
+}
+
+.print-actions h4 {
+    flex: 1;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.btn-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #1a1d3a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-print:hover {
+    background: #252850;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-excel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #217346;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-excel:hover {
+    background: #1a5c38;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-pdf:hover {
+    background: #b02a37;
+    transform: translateY(-1px);
+    color: white;
+}

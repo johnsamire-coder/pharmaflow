@@ -8,7 +8,6 @@
     <a href="/reports/" class="pf-btn pf-btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
 </div>
 
-<!-- فلترة -->
 <div class="pf-filters mb-4">
     <form method="get" class="row g-3 align-items-end">
         <div class="col-md-4">
@@ -16,18 +15,17 @@
             <select name="product" class="pf-form-select">
                 <option value="">كل المنتجات</option>
                 {% for p in products %}
-                <option value="{{ p.id }}" {% if selected_product == p.id|stringformat:"s" %}selected{% endif %}>
-                    {{ p.product_name }}
-                </option>
+                <option value="{{ p.id }}" {% if selected_product == p.id|stringformat:"s" %}selected{% endif %}>{{ p.product_name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-3">
-            <label class="pf-form-label">فلتر المخزون</label>
+            <label class="pf-form-label">الفلتر</label>
             <select name="stock_filter" class="pf-form-select">
                 <option value="">الكل</option>
-                <option value="near_expiry" {% if selected_stock_filter == 'near_expiry' %}selected{% endif %}>قارب على الانتهاء (30 يوم)</option>
-                <option value="expired" {% if selected_stock_filter == 'expired' %}selected{% endif %}>منتهي الصلاحية</option>
+                <option value="low" {% if selected_stock_filter == 'low' %}selected{% endif %}>منخفض</option>
+                <option value="near_expiry" {% if selected_stock_filter == 'near_expiry' %}selected{% endif %}>قارب على الانتهاء</option>
+                <option value="expired" {% if selected_stock_filter == 'expired' %}selected{% endif %}>منتهي</option>
             </select>
         </div>
         <div class="col-md-3">
@@ -37,90 +35,50 @@
     </form>
 </div>
 
-<!-- إحصائيات -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-primary">
-            <div class="pf-stat-icon icon-primary"><i class="fas fa-boxes"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">إجمالي المتاح</div>
-                <div class="pf-stat-value">{{ total_available|default:"0" }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-warning">
-            <div class="pf-stat-icon icon-warning"><i class="fas fa-exclamation-triangle"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">قارب على الانتهاء</div>
-                <div class="pf-stat-value">{{ expiring_count|default:"0" }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-danger">
-            <div class="pf-stat-icon icon-danger"><i class="fas fa-times-circle"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">منتهي الصلاحية</div>
-                <div class="pf-stat-value">{{ expired_count|default:"0" }}</div>
-            </div>
-        </div>
-    </div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-primary"><div class="pf-stat-icon icon-primary"><i class="fas fa-boxes"></i></div><div class="pf-stat-content"><div class="pf-stat-label">إجمالي المتاح</div><div class="pf-stat-value">{{ total_available }}</div></div></div></div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-warning"><div class="pf-stat-icon icon-warning"><i class="fas fa-exclamation-triangle"></i></div><div class="pf-stat-content"><div class="pf-stat-label">قارب على الانتهاء</div><div class="pf-stat-value">{{ expiring_count }}</div></div></div></div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-danger"><div class="pf-stat-icon icon-danger"><i class="fas fa-times-circle"></i></div><div class="pf-stat-content"><div class="pf-stat-label">منتهي</div><div class="pf-stat-value">{{ expired_count }}</div></div></div></div>
 </div>
 
-<!-- الدفعات -->
 <div class="pf-card">
-    <div class="pf-card-header">
-        <h6><i class="fas fa-list me-2"></i>تفاصيل المخزون <small style="color:#aaa;">(FEFO)</small></h6>
-        <span class="pf-badge pf-badge-info">{{ batches|length }} دفعة</span>
-    </div>
+    <div class="pf-card-header"><h6><i class="fas fa-list me-2"></i>تفاصيل المخزون</h6></div>
     <div style="overflow-x:auto;">
         <table class="pf-table">
             <thead>
                 <tr>
+                    <th>المخزن</th>
                     <th>المنتج</th>
                     <th>رقم الدفعة</th>
                     <th>تاريخ الانتهاء</th>
                     <th>الأيام المتبقية</th>
-                    <th>الكمية المتاحة</th>
-                    <th>الحالة</th>
+                    <th>المتاح</th>
+                    <th>المحجوز</th>
+                    <th>تحت التصريف</th>
                 </tr>
             </thead>
             <tbody>
-                {% for batch in batches %}
+                {% for row in rows %}
                 <tr>
-                    <td style="font-weight:700;">{{ batch.product.product_name }}</td>
-                    <td><code style="background:#f0f2f8;padding:3px 8px;border-radius:6px;font-size:12px;">{{ batch.batch_number }}</code></td>
-                    <td style="font-weight:600;color:{% if batch.expiry_date < date_today %}var(--pf-danger){% elif batch.days_until_expiry < 30 %}var(--pf-warning){% else %}var(--pf-success){% endif %};">
-                        {{ batch.expiry_date|date:"Y/m/d" }}
-                    </td>
+                    <td>{{ row.warehouse.warehouse_name|default:"-" }}</td>
+                    <td>{{ row.product.product_name }}</td>
+                    <td>{{ row.batch.batch_number|default:"-" }}</td>
+                    <td>{{ row.expiry_date|date:"Y/m/d"|default:"-" }}</td>
                     <td>
-                        {% if batch.expiry_date < date_today %}
-                        <span class="pf-badge pf-badge-danger">منتهي</span>
-                        {% else %}
-                        <span style="font-weight:700;">{{ batch.days_until_expiry }} يوم</span>
-                        {% endif %}
+                        {% if row.days_until_expiry is not None %}
+                            {% if row.days_until_expiry < 0 %}
+                                <span class="pf-badge pf-badge-danger">منتهي</span>
+                            {% else %}
+                                {{ row.days_until_expiry }} يوم
+                            {% endif %}
+                        {% else %}-{% endif %}
                     </td>
-                    <td style="font-weight:700;font-size:16px;">{{ batch.quantity_available }}</td>
-                    <td>
-                        {% if batch.expiry_date < date_today %}
-                        <span class="pf-badge pf-badge-danger">منتهي الصلاحية</span>
-                        {% elif batch.days_until_expiry < 30 %}
-                        <span class="pf-badge pf-badge-warning">قارب على الانتهاء</span>
-                        {% else %}
-                        <span class="pf-badge pf-badge-success">جيد</span>
-                        {% endif %}
-                    </td>
+                    <td style="font-weight:700;">{{ row.quantity_available }}</td>
+                    <td>{{ row.quantity_reserved }}</td>
+                    <td>{{ row.quantity_on_consignment }}</td>
                 </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="6">
-                        <div class="pf-empty">
-                            <i class="fas fa-warehouse"></i>
-                            <h5>لا توجد بيانات</h5>
-                        </div>
-                    </td>
-                </tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">لا توجد بيانات</td></tr>
                 {% endfor %}
             </tbody>
         </table>

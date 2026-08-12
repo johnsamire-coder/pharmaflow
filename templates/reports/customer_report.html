@@ -8,21 +8,11 @@
     <a href="/reports/" class="pf-btn pf-btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
 </div>
 
-<!-- فلترة -->
 <div class="pf-filters mb-4">
     <form method="get" class="row g-3 align-items-end">
         <div class="col-md-4">
             <label class="pf-form-label">بحث</label>
-            <input type="text" name="search" value="{{ search }}" class="pf-form-control" placeholder="اسم العميل أو الهاتف...">
-        </div>
-        <div class="col-md-3">
-            <label class="pf-form-label">المنطقة</label>
-            <select name="area" class="pf-form-select">
-                <option value="">كل المناطق</option>
-                {% for area in areas %}
-                <option value="{{ area }}" {% if selected_area == area %}selected{% endif %}>{{ area }}</option>
-                {% endfor %}
-            </select>
+            <input type="text" name="search" value="{{ search }}" class="pf-form-control" placeholder="اسم العميل أو الهاتف">
         </div>
         <div class="col-md-3">
             <button type="submit" class="pf-btn pf-btn-primary me-2"><i class="fas fa-search"></i> بحث</button>
@@ -31,73 +21,38 @@
     </form>
 </div>
 
-<!-- إحصائيات -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-primary">
-            <div class="pf-stat-icon icon-primary"><i class="fas fa-users"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">عدد العملاء</div>
-                <div class="pf-stat-value">{{ customers|length }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-warning">
-            <div class="pf-stat-icon icon-warning"><i class="fas fa-money-bill-wave"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">إجمالي المديونيات</div>
-                <div class="pf-stat-value" style="font-size:18px;">{{ total_balance|floatformat:2|default:"0.00" }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-6">
-        <div class="pf-stat-card stat-danger">
-            <div class="pf-stat-icon icon-danger"><i class="fas fa-exclamation-circle"></i></div>
-            <div class="pf-stat-content">
-                <div class="pf-stat-label">تجاوزوا الحد</div>
-                <div class="pf-stat-value">{{ over_limit|default:"0" }}</div>
-            </div>
-        </div>
-    </div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-primary"><div class="pf-stat-icon icon-primary"><i class="fas fa-users"></i></div><div class="pf-stat-content"><div class="pf-stat-label">عدد العملاء</div><div class="pf-stat-value">{{ customers|length }}</div></div></div></div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-warning"><div class="pf-stat-icon icon-warning"><i class="fas fa-money-bill-wave"></i></div><div class="pf-stat-content"><div class="pf-stat-label">إجمالي المستحق</div><div class="pf-stat-value" style="font-size:18px;">{{ total_balance|floatformat:2 }}</div></div></div></div>
+    <div class="col-md-4 col-6"><div class="pf-stat-card stat-danger"><div class="pf-stat-icon icon-danger"><i class="fas fa-exclamation-circle"></i></div><div class="pf-stat-content"><div class="pf-stat-label">تجاوزوا الحد</div><div class="pf-stat-value">{{ over_limit }}</div></div></div></div>
 </div>
 
-<!-- جدول العملاء -->
 <div class="pf-card">
-    <div class="pf-card-header">
-        <h6><i class="fas fa-list me-2"></i>تفاصيل العملاء</h6>
-    </div>
+    <div class="pf-card-header"><h6><i class="fas fa-list me-2"></i>تفاصيل العملاء</h6></div>
     <div style="overflow-x:auto;">
         <table class="pf-table">
             <thead>
                 <tr>
-                    <th>#</th>
                     <th>العميل</th>
                     <th>الهاتف</th>
                     <th>المنطقة</th>
                     <th>حد الائتمان</th>
-                    <th>الرصيد الحالي</th>
+                    <th>الرصيد المستحق</th>
                     <th>الحالة</th>
                 </tr>
             </thead>
             <tbody>
                 {% for customer in customers %}
                 <tr>
-                    <td style="color:#aaa;">{{ forloop.counter }}</td>
-                    <td>
-                        <a href="/customers/{{ customer.pk }}/"
-                           style="font-weight:700;color:var(--pf-primary);text-decoration:none;">
-                            {{ customer.customer_name }}
-                        </a>
-                    </td>
-                    <td style="color:#888;font-size:13px;">{{ customer.phone|default:"-" }}</td>
+                    <td><a href="/customers/{{ customer.pk }}/" style="color:var(--pf-primary);text-decoration:none;font-weight:700;">{{ customer.pharmacy_name }}</a></td>
+                    <td>{{ customer.phone|default:"-" }}</td>
                     <td>{{ customer.area|default:"-" }}</td>
-                    <td>{{ customer.credit_limit|floatformat:2|default:"0.00" }}</td>
-                    <td style="font-weight:700;color:{% if customer.current_balance > customer.credit_limit %}var(--pf-danger){% else %}var(--pf-success){% endif %};">
-                        {{ customer.current_balance|floatformat:2|default:"0.00" }}
+                    <td>{{ customer.credit_limit|floatformat:2 }}</td>
+                    <td style="font-weight:700;color:{% if customer.due_balance > customer.credit_limit %}var(--pf-danger){% else %}var(--pf-success){% endif %};">
+                        {{ customer.due_balance|floatformat:2 }}
                     </td>
                     <td>
-                        {% if customer.current_balance > customer.credit_limit %}
+                        {% if customer.due_balance > customer.credit_limit %}
                         <span class="pf-badge pf-badge-danger">تجاوز الحد</span>
                         {% else %}
                         <span class="pf-badge pf-badge-success">طبيعي</span>
@@ -105,14 +60,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="7">
-                        <div class="pf-empty">
-                            <i class="fas fa-users"></i>
-                            <h5>لا توجد بيانات</h5>
-                        </div>
-                    </td>
-                </tr>
+                <tr><td colspan="6" class="text-center text-muted py-4">لا توجد بيانات</td></tr>
                 {% endfor %}
             </tbody>
         </table>
